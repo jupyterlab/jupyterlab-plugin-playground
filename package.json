@@ -1,0 +1,26 @@
+{
+  "private": true,
+  "name": "jupyterlab-dynext",
+  "version": "0.0.1",
+  "description": "A JupyterLab extension.",
+  "author": "Wolf Vollprecht",
+  "main": "lib/plugin.js",
+  "keywords": [
+    "jupyter",
+    "jupyterlab",
+    "jupyterlab-extension"
+  ],
+  "jupyterlab": {
+    "extension": true,
+    "schemaDir": "schema"
+  },
+  "files": [
+    "schema/*.json",
+    "lib/*.js"
+  ],
+  "scripts": {},
+  "dependencies": {
+    "arcgis-map-ipywidget": "^1.7.0"
+  },
+  "devDependencies": {}
+}

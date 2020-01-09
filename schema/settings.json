@@ -1,0 +1,28 @@
+{
+  "jupyter.lab.setting-icon-class": "NoneForNow",
+  "jupyter.lab.setting-icon-label": "Dynamic Extension Loader Settings",
+  "title": "Dynamic Extension Loader Settings",
+  "description": "Dynamic Extension Loader Settings",
+  "properties": {
+    "urls": {
+      "title": "List of URLs to fetch extensions from",
+      "description": "",
+      "default": ["https://gist.githubusercontent.com/wolfv/063f1d12a727e94ef65c6d22dcd5be8a/raw/9237638b61b81535da02b23adf386191da00de1b/test.js"],
+      "type": "array",
+      "items": {
+      	"type": "string"
+      }
+    },
+    "extensions": {
+      "title": "List of extension text to load extension.",
+      "description": "",
+      "default": [],
+      "type": "array",
+      "items": {
+      	"type": "string"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "type": "object"
+}
