@@ -20,7 +20,7 @@
   ],
   "scripts": {},
   "dependencies": {
-    "arcgis-map-ipywidget": "^1.7.0"
+    "@jupyter-widgets/base": "^2.0.2"
   },
   "devDependencies": {}
 }

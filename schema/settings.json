@@ -1,8 +1,8 @@
 {
   "jupyter.lab.setting-icon-class": "NoneForNow",
-  "jupyter.lab.setting-icon-label": "Dynamic Extension Loader Settings",
-  "title": "Dynamic Extension Loader Settings",
-  "description": "Dynamic Extension Loader Settings",
+  "jupyter.lab.setting-icon-label": "Dynamic Extension Loader",
+  "title": "Dynamic Extension Loader",
+  "description": "Dynamic Extension Loader",
   "properties": {
     "urls": {
       "title": "List of URLs to fetch extensions from",

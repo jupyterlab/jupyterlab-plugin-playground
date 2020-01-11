@@ -1,18 +1,21 @@
 return function()
 {
   return {
-    id: 'antoher',
+    id: 'adynamicwidget',
     autoStart: true,
-    requires: [],
-    activate: function(app) {
+    requires: ["jupyter.extensions.jupyterWidgetRegistry"],
+    activate: function(app, widgets) {
       require.config({
-        baseUrl: "https://unpkg.com/",
-        paths: {
-            "@jupyter-widgets/base": "http://localhost:8003/@jupyter-widgets"
-        }
+        baseUrl: "https://unpkg.com/"
       });
-      require(["bqplot@0.5.2/dist/index"], function(module) {
-        console.log(module);
+
+      let widget = 'bqplot';
+      require([widget + "@*/dist/index"], function(plugin) {
+        widgets.registerWidget({
+            name: widget,
+            version: plugin.version,
+            exports: plugin
+        });
       });
     }
   };
