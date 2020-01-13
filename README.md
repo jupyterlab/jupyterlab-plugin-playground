@@ -90,7 +90,7 @@ return function()
 
 If you want to test some dynamic scripts locally, then there is also a small test server available under `/scripts` which serves the directory content.
 
-# Loading from URL or current file
+### Loading from URL or current file
 
 In the JupyterLab settings you can configure some URL's to load scripts automatically from (e.g. GitHub gists).
 
