@@ -1,26 +1,45 @@
 {
-  "private": true,
   "name": "jupyterlab-dynext",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A JupyterLab extension.",
-  "author": "Wolf Vollprecht",
-  "main": "lib/plugin.js",
   "keywords": [
     "jupyter",
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "jupyterlab": {
-    "extension": true,
-    "schemaDir": "schema"
+  "homepage": "https://github.com/wolfv/jupyterlab-dynext",
+  "bugs": {
+    "url": "https://github.com/wolfv/jupyterlab-dynext/issues"
   },
+  "license": "BSD-3-Clause",
+  "author": "Wolf Vollprecht",
   "files": [
-    "schema/*.json",
-    "lib/*.js"
+    "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}"
   ],
-  "scripts": {},
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wolfv/jupyterlab-dynext.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf lib tsconfig.tsbuildinfo",
+    "prepare": "jlpm run clean && jlpm run build",
+    "watch": "tsc -w"
+  },
   "dependencies": {
+    "@jupyterlab/application": "^2.0.0-beta.2",
+    "@jupyterlab/settingregistry": "^2.0.0-beta.2",
+    "@jupyterlab/apputils": "^2.0.0-beta.2",
+    "@jupyterlab/fileeditor": "^2.0.0-beta.2",
     "@jupyter-widgets/base": "^2.0.2"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "rimraf": "^2.6.1",
+    "typescript": "~3.7.0"
+  },
+  "jupyterlab": {
+    "extension": true
+  }
 }
