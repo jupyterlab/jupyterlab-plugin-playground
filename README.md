@@ -17,38 +17,35 @@ jupyterlab-dynext uses require.js to dynamically load the extensions, and requir
 As a dynamic extension cannot just use the JupyterLab modules, we dynamically look up the modules in the required section, and inject them from JLab. Here is an example for a dynamic extension:
 
 ```js
-return function()
 {
-  return {
-    id: 'mydynamicplugin',
-    autoStart: true,
-    requires: ["@jupyterlab/apputils:ICommandPalette"],
-    activate: function(app, palette) {
-      console.log("Hello from a dynamically loaded plugin!");
+  id: 'mydynamicplugin',
+  autoStart: true,
+  requires: ["@jupyterlab/apputils:ICommandPalette"],
+  activate: function(app, palette) {
+    console.log("Hello from a dynamically loaded plugin!");
 
-      // We can use `.app` here to do something with the JupyterLab
-      // app instance, such as adding a new command
-      let commandID = "MySuperCoolDynamicCommand";
-      let toggle = true;
-      app.commands.addCommand(commandID, {
-        label: 'My Super Cool Dynamic Command',
-        isToggled: function() {
-          return toggle;
-        },
-        execute: function() {
-          console.log("Executed " + commandID);
-          toggle = !toggle;
-        }
-      });
+    // We can use `.app` here to do something with the JupyterLab
+    // app instance, such as adding a new command
+    let commandID = "MySuperCoolDynamicCommand";
+    let toggle = true;
+    app.commands.addCommand(commandID, {
+      label: 'My Super Cool Dynamic Command',
+      isToggled: function() {
+        return toggle;
+      },
+      execute: function() {
+        console.log("Executed " + commandID);
+        toggle = !toggle;
+      }
+    });
 
-      palette.addItem({
-        command: commandID,
-        // make it appear right at the top!
-        category: 'AAA',
-        args: {}
-      });
-    }
-  };
+    palette.addItem({
+      command: commandID,
+      // make it appear right at the top!
+      category: 'AAA',
+      args: {}
+    });
+  }
 }
 ```
 
@@ -61,32 +58,29 @@ These tokens can be a little arbitrary, so at this point it might require some d
 Here is one example of dynamically loading the `bqplot` widget library from unpkg.com:
 
 ```js
-return function()
 {
-  return {
-    id: 'mydynamicwidget',
-    autoStart: true,
-    requires: ["jupyter.extensions.jupyterWidgetRegistry"],
-    activate: function(app, widgets) {
-      require.config({
-        // take the widget from `unpkg.com`
-        baseUrl: "https://unpkg.com/"
-      });
+  id: 'mydynamicwidget',
+  autoStart: true,
+  requires: ["jupyter.extensions.jupyterWidgetRegistry"],
+  activate: function(app, widgets) {
+    require.config({
+      // take the widget from `unpkg.com`
+      baseUrl: "https://unpkg.com/"
+    });
 
-      let widget = 'bqplot';
-      // note that we are using require js here to load the AMD module
-      // requirejs is automatically loaded with jupyterlab-dynext.
-      // * (star) selects the latest version from unpkg, and then loads the `/dist/index.js` file
-      // the final URL will be something like https://unpkg.com/bqplot@^0.5.2/dist/index.js
-      require([widget + "@*/dist/index"], function(plugin) {
-        widgets.registerWidget({
-            name: widget,
-            version: plugin.version,
-            exports: plugin
-        });
+    let widget = 'bqplot';
+    // note that we are using require js here to load the AMD module
+    // requirejs is automatically loaded with jupyterlab-dynext.
+    // * (star) selects the latest version from unpkg, and then loads the `/dist/index.js` file
+    // the final URL will be something like https://unpkg.com/bqplot@^0.5.2/dist/index.js
+    require([widget + "@*/dist/index"], function(plugin) {
+      widgets.registerWidget({
+          name: widget,
+          version: plugin.version,
+          exports: plugin
       });
-    }
-  };
+    });
+  }
 }
 ```
 
