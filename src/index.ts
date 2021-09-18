@@ -9,8 +9,8 @@ import { ICommandPalette } from '@jupyterlab/apputils';
 
 import { IEditorTracker } from '@jupyterlab/fileeditor';
 
-// import * as base from '@jupyter-widgets/base';
-// void base;
+import * as base from '@jupyter-widgets/base';
+void base;
 
 async function load_plugin(js_body: string, app: JupyterFrontEnd) {
   const token_map = new Map(
@@ -49,14 +49,13 @@ const plugin: JupyterFrontEndPlugin<void> = {
     commandPalette: ICommandPalette,
     editorTracker: IEditorTracker
   ) => {
-    (function (d) {
-      const script = d.createElement('script');
+    (doc => {
+      const script = doc.createElement('script');
       script.type = 'text/javascript';
       script.async = true;
-      script.onload = function () {
-        // (window as any).define("@jupyter-widgets/base", [], function() {
-        //     return base;
-        // });
+      script.onload = () => {
+        // Define the widgets base module for RequireJS
+        (window as any).define('@jupyter-widgets/base', [], () => base);
 
         const commandID = 'LoadCurrentFileAsExtension';
         app.commands.addCommand(commandID, {
@@ -94,7 +93,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
       script.src =
         'https://requirejs.org/docs/release/2.3.6/comments/require.js';
-      d.getElementsByTagName('head')[0].appendChild(script);
+      doc.getElementsByTagName('head')[0].appendChild(script);
     })(window.document);
   }
 };
