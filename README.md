@@ -1,5 +1,7 @@
 # jupyterlab-dynext
 
+[![Github Actions Status](https://github.com/wolfv/jupyterlab-dynext/workflows/Build/badge.svg)](https://github.com/wolfv/jupyterlab-dynext/actions/workflows/build.yml)[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/wolfv/jupyterlab-dynext/main?urlpath=lab)
+
 A JupyterLab extension to load JupyterLab extensions (dynamically). 
 
 One of the big impediments when developing JupyterLab (JLab) extensions is that it's currently required to 
@@ -96,21 +98,77 @@ In the JupyterLab settings you can configure some URL's to load scripts automati
 
 And last but not least, you can also edit a JavaScript file inside JupyterLab, and then run the command "Load current file as extension" to load the current file as a JupyterLab extension. Note: currently it's only possible to run this command once for each `id`. To support loading the same widget multiple times, we would need to clear the previous extension - but this might not be side-effect free. We currently don't have a solution for this, but we could either add a `deactivate` function to call on clear, or we could just have the author of the extension make sure that reloading the extension is possible without breaking everything.
 
-## Prerequisites
 
-* JupyterLab
 
-## Installation
+## Requirements
 
-**not distributed as a package yet, follow dev install**
+* JupyterLab >= 3.0
 
-## Development
+## Install
 
-For a development install (requires npm version 4 or later), do the following in the repository directory:
+To install the extension, execute:
 
 ```bash
-conda install jupyterlab nodejs yarn -c conda-forge
-yarn install
-jupyterlab labextension build . // OR
-jupyter labextension link .
+pip install jupyterlab-dynext
 ```
+
+## Uninstall
+
+To remove the extension, execute:
+
+```bash
+pip uninstall jupyterlab-dynext
+```
+
+
+## Contributing
+
+### Development install
+
+Note: You will need NodeJS to build the extension package.
+
+The `jlpm` command is JupyterLab's pinned version of
+[yarn](https://yarnpkg.com/) that is installed with JupyterLab. You may use
+`yarn` or `npm` in lieu of `jlpm` below.
+
+```bash
+# Clone the repo to your local environment
+# Change directory to the jupyterlab-dynext directory
+# Install package in development mode
+pip install -e .
+# Link your development version of the extension with JupyterLab
+jupyter labextension develop . --overwrite
+# Rebuild extension Typescript source after making changes
+jlpm run build
+```
+
+You can watch the source directory and run JupyterLab at the same time in different terminals to watch for changes in the extension's source and automatically rebuild the extension.
+
+```bash
+# Watch the source directory in one terminal, automatically rebuilding when needed
+jlpm run watch
+# Run JupyterLab in another terminal
+jupyter lab
+```
+
+With the watch command running, every saved change will immediately be built locally and available in your running JupyterLab. Refresh JupyterLab to load the change in your browser (you may need to wait several seconds for the extension to be rebuilt).
+
+By default, the `jlpm run build` command generates the source maps for this extension to make it easier to debug using the browser dev tools. To also generate source maps for the JupyterLab core extensions, you can run the following command:
+
+```bash
+jupyter lab build --minimize=False
+```
+
+### Development uninstall
+
+```bash
+pip uninstall jupyterlab-dynext
+```
+
+In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
+command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
+folder is located. Then you can remove the symlink named `jupyterlab-dynext` within that folder.
+
+### Packaging the extension
+
+See [RELEASE](RELEASE.md)
