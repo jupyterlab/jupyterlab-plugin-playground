@@ -1,98 +1,115 @@
 import {
-  JupyterFrontEnd, JupyterFrontEndPlugin
+  JupyterFrontEnd,
+  JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 
-import {
-	ISettingRegistry
-} from '@jupyterlab/settingregistry';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
-import {
-	ICommandPalette
-} from '@jupyterlab/apputils';
+import { ICommandPalette } from '@jupyterlab/apputils';
 
-import {
-	IEditorTracker
-} from '@jupyterlab/fileeditor';
+import { IEditorTracker } from '@jupyterlab/fileeditor';
 
 import * as base from '@jupyter-widgets/base';
-void base;
 
-async function load_plugin(js_body: string, app: JupyterFrontEnd) {
-    let token_map = new Map(Array.from((app as any)._serviceMap.keys()).map((t: any) => [t.name, t]));
+async function load_plugin(code: string, app: JupyterFrontEnd) {
+  const token_map = new Map(
+    Array.from((app as any)._serviceMap.keys()).map((t: any) => [t.name, t])
+  );
 
-    var module_fct = new Function(js_body)();
-    let module_obj = module_fct();
+  const functionBody = `'use strict';return (${code})`;
+  console.log(functionBody);
+  let plugin;
+  try {
+    plugin = new Function(functionBody)();
+  } catch (e) {
+    alert(`Problem loading extension: ${e}
+    
+    ${functionBody}`);
+    throw e;
+  }
+  // We allow one level of indirection (return a function instead of a plugin)
+  if (typeof plugin === 'function') {
+    plugin = plugin();
+  }
 
-    module_obj.requires = module_obj.requires.map((value: any) => token_map.get(value));
+  // Finally, we allow returning a promise (or an async function above).
+  plugin = await Promise.resolve(plugin);
 
-    (app as any).registerPluginModule(module_obj);
-    if (module_obj.autoStart) {
-        await app.activatePlugin(module_obj.id);
-    }
+  plugin.requires = plugin.requires.map((value: any) => token_map.get(value));
+
+  (app as any).registerPluginModule(plugin);
+  if (plugin.autoStart) {
+    await app.activatePlugin(plugin.id);
+  }
 }
 
-async function get_module(url: string, app: JupyterFrontEnd)
-{
-    let response = await fetch(url);
-    let js_body = await response.text();
-    load_plugin(js_body, app);
+async function get_module(url: string, app: JupyterFrontEnd) {
+  const response = await fetch(url);
+  const js_body = await response.text();
+  load_plugin(js_body, app);
 }
 
 /**
  * Initialization data for the jupyterlab-dynext extension.
  */
-const extension: JupyterFrontEndPlugin<void> = {
-  id: 'jupyterlab-dynext',
+const plugin: JupyterFrontEndPlugin<void> = {
+  id: 'jupyterlab-dynext:plugin',
   autoStart: true,
   requires: [ISettingRegistry, ICommandPalette, IEditorTracker],
-  activate: (app: JupyterFrontEnd,
-  			 settingRegistry: ISettingRegistry,
-  			 commandPalette: ICommandPalette, 
-  			 editorTracker: IEditorTracker) => {
-  	(function(d) {
-  	    const script = d.createElement('script');
-  	    script.type = 'text/javascript';
-  	    script.async = true;
-  	    script.onload = function() {
+  activate: (
+    app: JupyterFrontEnd,
+    settingRegistry: ISettingRegistry,
+    commandPalette: ICommandPalette,
+    editorTracker: IEditorTracker
+  ) => {
+    // In order to accommodate loading ipywidgets and other AMD modules, we
+    // first put RequireJS on the page (and define the @jupyter-widgets/base
+    // module to give our system version) before loading any custom extensions.
+    const script = document.createElement('script');
+    script.src = 'https://requirejs.org/docs/release/2.3.6/comments/require.js';
+    script.type = 'text/javascript';
+    script.async = true;
+    script.onload = () => {
+      // Define the widgets base module for RequireJS
+      (window as any).define('@jupyter-widgets/base', [], () => base);
 
-  	        (window as any).define("@jupyter-widgets/base", [], function() {
-  	            return base;
-  	        });
+      const commandID = 'LoadCurrentFileAsExtension';
+      app.commands.addCommand(commandID, {
+        label: 'Load current file as extension',
+        isEnabled: () =>
+          editorTracker.currentWidget !== null &&
+          editorTracker.currentWidget === app.shell.currentWidget,
+        execute: async () => {
+          if (editorTracker.currentWidget) {
+            const currentText =
+              editorTracker.currentWidget.context.model.toString();
+            load_plugin(currentText, app);
+          }
+        }
+      });
 
-  	        let commandID = "LoadCurrentFileAsExtension";
-  	        app.commands.addCommand(commandID, {
-  	            label: 'Load current file as extension',
-  	            isEnabled: () => editorTracker.currentWidget !== null &&
-  	                             editorTracker.currentWidget === app.shell.currentWidget,
-  	            execute: async () => {
-  	                let currentText = editorTracker.currentWidget.context.model.toString();
-  	                load_plugin(currentText, app);
-  	            }
-  	        });
+      commandPalette.addItem({
+        command: commandID,
+        category: 'Dynamic Extension Loader',
+        args: {}
+      });
 
-  	        commandPalette.addItem({
-  	            command: commandID,
-  	            category: 'Dynamic Extension Loader',
-  	            args: {}
-  	        });
+      app.restored.then(async () => {
+        const settings = await settingRegistry.load(plugin.id);
+        const urls = settings.composite.urls as string[];
+        for (const u of urls) {
+          await get_module(u, app);
+        }
+        const extensions = settings.composite.extensions as string[];
+        for (const t of extensions) {
+          await load_plugin(t, app);
+        }
+      });
+    };
 
-  	        app.restored.then(async () => {
-  	            let settings = await settingRegistry.load('jupyterlab-dynext:settings');
-  	            let urls = settings.composite.urls as string[];
-  	            for (let u of urls) {
-  	                await get_module(u, app);
-  	            }
-  	            let extensions = settings.composite.extensions as string[];
-  	            for (let t of extensions) {
-  	                await load_plugin(t, app);
-  	            }
-  	        });
-  	    };
-
-  	    script.src = 'https://requirejs.org/docs/release/2.3.6/comments/require.js';
-  	    d.getElementsByTagName('head')[0].appendChild(script);
-  	}(window.document));
+    // Actually load RequireJS
+    document.getElementsByTagName('head')[0].appendChild(script);
   }
 };
 
-export default extension;
+export default plugin;

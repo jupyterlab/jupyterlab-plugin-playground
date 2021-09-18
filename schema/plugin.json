@@ -7,10 +7,10 @@
     "urls": {
       "title": "List of URLs to fetch extensions from",
       "description": "",
-      "default": ["https://gist.githubusercontent.com/wolfv/063f1d12a727e94ef65c6d22dcd5be8a/raw/9237638b61b81535da02b23adf386191da00de1b/test.js"],
+      "default": [],
       "type": "array",
       "items": {
-      	"type": "string"
+        "type": "string"
       }
     },
     "extensions": {
@@ -19,7 +19,7 @@
       "default": [],
       "type": "array",
       "items": {
-      	"type": "string"
+        "type": "string"
       }
     }
   },
