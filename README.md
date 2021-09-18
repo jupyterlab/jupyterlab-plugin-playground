@@ -64,15 +64,15 @@ Here is one example of dynamically loading the `bqplot` widget library from unpk
   requires: ["jupyter.extensions.jupyterWidgetRegistry"],
   activate: function(app, widgets) {
     require.config({
-      // take the widget from `unpkg.com`
-      baseUrl: "https://unpkg.com/"
+      // take the widget from jsdelivr
+      baseUrl: "https://cdn.jsdelivr.net/npm"
     });
 
     let widget = 'bqplot';
     // note that we are using require js here to load the AMD module
     // requirejs is automatically loaded with jupyterlab-dynext.
-    // * (star) selects the latest version from unpkg, and then loads the `/dist/index.js` file
-    // the final URL will be something like https://unpkg.com/bqplot@^0.5.2/dist/index.js
+    // * (star) selects the latest version from jsdelivr, and then loads the `/dist/index.js` file
+    // the final URL will be something like https://cdn.jsdelivr.net/npm/bqplot@*/dist/index.js
     require([widget + "@*/dist/index"], function(plugin) {
       widgets.registerWidget({
           name: widget,
@@ -82,6 +82,7 @@ Here is one example of dynamically loading the `bqplot` widget library from unpk
     });
   }
 }
+
 ```
 
 If you want to test some dynamic scripts locally, then there is also a small test server available under `/scripts` which serves the directory content.
