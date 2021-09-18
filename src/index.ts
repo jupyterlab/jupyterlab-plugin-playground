@@ -10,7 +10,6 @@ import { ICommandPalette } from '@jupyterlab/apputils';
 import { IEditorTracker } from '@jupyterlab/fileeditor';
 
 import * as base from '@jupyter-widgets/base';
-void base;
 
 async function load_plugin(code: string, app: JupyterFrontEnd) {
   const token_map = new Map(
@@ -63,15 +62,13 @@ const plugin: JupyterFrontEndPlugin<void> = {
     commandPalette: ICommandPalette,
     editorTracker: IEditorTracker
   ) => {
-    // Create script tag to load RequireJS
+    // In order to accommodate loading ipywidgets and other AMD modules, we
+    // first put RequireJS on the page (and define the @jupyter-widgets/base
+    // module to give our system version) before loading any custom extensions.
     const script = document.createElement('script');
     script.src = 'https://requirejs.org/docs/release/2.3.6/comments/require.js';
     script.type = 'text/javascript';
     script.async = true;
-
-    // Once RequireJS is loaded, use it to load Jupyter Widgets. We load this
-    // before loading any custom scripts so that the custom scripts will be
-    // able to load widget javascript via AMD modules.
     script.onload = () => {
       // Define the widgets base module for RequireJS
       (window as any).define('@jupyter-widgets/base', [], () => base);
