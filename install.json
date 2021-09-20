@@ -1,5 +1,5 @@
 {
   "packageManager": "python",
-  "packageName": "jupyterlab-dynext",
-  "uninstallInstructions": "Use your Python package manager (pip, conda, etc.) to uninstall the package jupyterlab-dynext"
+  "packageName": "jupyterlab_dynext",
+  "uninstallInstructions": "Use your Python package manager (pip, conda, etc.) to uninstall the package jupyterlab_dynext"
 }
