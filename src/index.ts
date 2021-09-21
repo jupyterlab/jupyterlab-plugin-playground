@@ -35,7 +35,8 @@ async function load_plugin(code: string, app: JupyterFrontEnd) {
   // Finally, we allow returning a promise (or an async function above).
   plugin = await Promise.resolve(plugin);
 
-  plugin.requires = plugin.requires.map((value: any) => token_map.get(value));
+  plugin.requires = plugin.requires?.map((value: any) => token_map.get(value));
+  plugin.optional = plugin.optional?.map((value: any) => token_map.get(value));
 
   (app as any).registerPluginModule(plugin);
   if (plugin.autoStart) {
