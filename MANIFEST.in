@@ -8,7 +8,7 @@ include install.json
 include ts*.json
 include yarn.lock
 
-graft jupyterlab-dynext/labextension
+graft jupyterlab_dynext/labextension
 
 # Javascript files
 graft src

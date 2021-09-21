@@ -104,7 +104,7 @@ And last but not least, you can also edit a JavaScript file inside JupyterLab, a
 To install the extension, execute:
 
 ```bash
-pip install jupyterlab-dynext
+pip install jupyterlab_dynext
 ```
 
 ## Uninstall
@@ -112,7 +112,7 @@ pip install jupyterlab-dynext
 To remove the extension, execute:
 
 ```bash
-pip uninstall jupyterlab-dynext
+pip uninstall jupyterlab_dynext
 ```
 
 
@@ -157,7 +157,7 @@ jupyter lab build --minimize=False
 ### Development uninstall
 
 ```bash
-pip uninstall jupyterlab-dynext
+pip uninstall jupyterlab_dynext
 ```
 
 In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
