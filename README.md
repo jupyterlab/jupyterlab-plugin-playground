@@ -70,7 +70,7 @@ Here is one example of dynamically loading the `bqplot` widget library from unpk
 
     let widget = 'bqplot';
     // note that we are using require js here to load the AMD module
-    // requirejs is automatically loaded with jupyterlab-pluginplayground.
+    // requirejs is automatically loaded with @jupyterlab/pluginplayground.
     // * (star) selects the latest version from jsdelivr, and then loads the `/dist/index.js` file
     // the final URL will be something like https://cdn.jsdelivr.net/npm/bqplot@*/dist/index.js
     require([widget + "@*/dist/index"], function(plugin) {
@@ -162,7 +162,7 @@ pip uninstall jupyterlab-pluginplayground
 
 In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
 command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
-folder is located. Then you can remove the symlink named `jupyterlab-pluginplayground` within that folder.
+folder is located. Then you can remove the symlink named `@jupyterlab/pluginplayground` within that folder.
 
 ### Packaging the extension
 
