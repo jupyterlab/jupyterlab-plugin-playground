@@ -51,10 +51,10 @@ async function get_module(url: string, app: JupyterFrontEnd) {
 }
 
 /**
- * Initialization data for the jupyterlab-pluginplayground extension.
+ * Initialization data for the @jupyterlab/pluginplayground extension.
  */
 const plugin: JupyterFrontEndPlugin<void> = {
-  id: 'jupyterlab-pluginplayground:plugin',
+  id: '@jupyterlab/pluginplayground:plugin',
   autoStart: true,
   requires: [ISettingRegistry, ICommandPalette, IEditorTracker],
   activate: (
