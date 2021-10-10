@@ -1,6 +1,6 @@
-# jupyterlab-pluginplayground
+# JupyterLab Plugin Playground
 
-[![Github Actions Status](https://github.com/wolfv/jupyterlab-pluginplayground/workflows/Build/badge.svg)](https://github.com/wolfv/jupyterlab-pluginplayground/actions/workflows/build.yml)[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/wolfv/jupyterlab-pluginplayground/main?urlpath=lab)
+[![Github Actions Status](https://github.com/jupyterlab/jupyterlab-pluginplayground/workflows/Build/badge.svg)](https://github.com/jupyterlab/jupyterlab-pluginplayground/actions/workflows/build.yml)[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyterlab/jupyterlab-pluginplayground/main?urlpath=lab)
 
 A JupyterLab extension to load JupyterLab extensions (dynamically). 
 
