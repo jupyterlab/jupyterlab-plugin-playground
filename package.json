@@ -1,5 +1,5 @@
 {
-  "name": "@jupyterlab/pluginplayground",
+  "name": "@jupyterlab/plugin-playground",
   "version": "0.1.0",
   "description": "A JupyterLab extension.",
   "keywords": [
@@ -7,9 +7,9 @@
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/jupyterlab/jupyterlab-pluginplayground",
+  "homepage": "https://github.com/jupyterlab/jupyterlab-plugin-playground",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyterlab-pluginplayground/issues"
+    "url": "https://github.com/jupyterlab/jupyterlab-plugin-playground/issues"
   },
   "license": "BSD-3-Clause",
   "author": {
@@ -25,7 +25,7 @@
   "style": "style/index.css",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyterlab-pluginplayground.git"
+    "url": "https://github.com/jupyterlab/jupyterlab-plugin-playground.git"
   },
   "scripts": {
     "build": "jlpm run build:lib && jlpm run build:labextension:dev",
@@ -35,7 +35,7 @@
     "build:lib": "tsc",
     "clean": "jlpm run clean:lib",
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
-    "clean:labextension": "rimraf jupyterlab_pluginplayground/labextension",
+    "clean:labextension": "rimraf jupyterlab_plugin_playground/labextension",
     "clean:all": "jlpm run clean:lib && jlpm run clean:labextension",
     "eslint": "eslint . --ext .ts,.tsx --fix",
     "eslint:check": "eslint . --ext .ts,.tsx",
@@ -70,7 +70,7 @@
   "styleModule": "style/index.js",
   "jupyterlab": { 
     "extension": true,
-    "outputDir": "jupyterlab_pluginplayground/labextension",
+    "outputDir": "jupyterlab_plugin_playground/labextension",
     "schemaDir": "schema"
   },
   "jupyter-releaser": {

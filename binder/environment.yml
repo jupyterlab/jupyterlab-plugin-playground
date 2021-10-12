@@ -1,10 +1,10 @@
-# a mybinder.org-ready environment for demoing jupyterlab-pluginplayground
+# a mybinder.org-ready environment for demoing jupyterlab-plugin-playground
 # this environment may also be used locally on Linux/MacOS/Windows, e.g.
 #
 #   conda env update --file binder/environment.yml
-#   conda activate jupyterlab-pluginplayground-demo
+#   conda activate jupyterlab-plugin-playground-demo
 #
-name: jupyterlab-pluginplayground-demo
+name: jupyterlab-plugin-playground-demo
 
 channels:
   - conda-forge

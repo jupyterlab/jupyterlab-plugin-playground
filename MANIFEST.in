@@ -8,7 +8,7 @@ include install.json
 include ts*.json
 include yarn.lock
 
-graft jupyterlab_pluginplayground/labextension
+graft jupyterlab_plugin_playground/labextension
 
 # Javascript files
 graft src

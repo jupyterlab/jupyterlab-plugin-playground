@@ -1,5 +1,5 @@
 """
-jupyterlab-pluginplayground setup
+jupyterlab-plugin-playground setup
 """
 import json
 import sys
@@ -10,7 +10,7 @@ import setuptools
 HERE = Path(__file__).parent.resolve()
 
 # The name of the project
-name = "jupyterlab_pluginplayground"
+name = "jupyterlab_plugin_playground"
 
 lab_path = (HERE / name.replace("-", "_") / "labextension")
 
@@ -20,7 +20,7 @@ ensured_targets = [
     str(lab_path / "static/style.js")
 ]
 
-labext_name = "@jupyterlab/pluginplayground"
+labext_name = "@jupyterlab/plugin-playground"
 
 data_files_spec = [
     ("share/jupyter/labextensions/%s" % labext_name, str(lab_path.relative_to(HERE)), "**"),

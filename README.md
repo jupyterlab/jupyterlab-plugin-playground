@@ -1,6 +1,6 @@
 # JupyterLab Plugin Playground
 
-[![Github Actions Status](https://github.com/jupyterlab/jupyterlab-pluginplayground/workflows/Build/badge.svg)](https://github.com/jupyterlab/jupyterlab-pluginplayground/actions/workflows/build.yml)[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyterlab/jupyterlab-pluginplayground/main?urlpath=lab)
+[![Github Actions Status](https://github.com/jupyterlab/jupyterlab-plugin-playground/workflows/Build/badge.svg)](https://github.com/jupyterlab/jupyterlab-plugin-playground/actions/workflows/build.yml)[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyterlab/jupyterlab-plugin-playground/main?urlpath=lab)
 
 A JupyterLab extension to load JupyterLab extensions (dynamically). 
 
@@ -12,7 +12,7 @@ Just refresh JupyterLab to re-load the extension, no recompilation necessary!
 
 Note that for real deployments, it might still be a lot better to actually compile the extension *into* JLab, to benefit from proper minimization and, more importantly, deduplication.
 
-jupyterlab-pluginplayground uses require.js to dynamically load the extensions, and require.js supports the AMD module syntax. Using an AMD module, you can also dynamically load widget extensions to jupyterlab -- however, there is one caveat -- the widget needs to be loaded before opening the first notebook.
+jupyterlab-plugin-playground uses require.js to dynamically load the extensions, and require.js supports the AMD module syntax. Using an AMD module, you can also dynamically load widget extensions to jupyterlab -- however, there is one caveat -- the widget needs to be loaded before opening the first notebook.
 
 As a dynamic extension cannot just use the JupyterLab modules, we dynamically look up the modules in the required section, and inject them from JLab. Here is an example for a dynamic extension:
 
@@ -70,7 +70,7 @@ Here is one example of dynamically loading the `bqplot` widget library from unpk
 
     let widget = 'bqplot';
     // note that we are using require js here to load the AMD module
-    // requirejs is automatically loaded with @jupyterlab/pluginplayground.
+    // requirejs is automatically loaded with @jupyterlab/plugin-playground.
     // * (star) selects the latest version from jsdelivr, and then loads the `/dist/index.js` file
     // the final URL will be something like https://cdn.jsdelivr.net/npm/bqplot@*/dist/index.js
     require([widget + "@*/dist/index"], function(plugin) {
@@ -104,7 +104,7 @@ And last but not least, you can also edit a JavaScript file inside JupyterLab, a
 To install the extension, execute:
 
 ```bash
-pip install jupyterlab-pluginplayground
+pip install jupyterlab-plugin-playground
 ```
 
 ## Uninstall
@@ -112,7 +112,7 @@ pip install jupyterlab-pluginplayground
 To remove the extension, execute:
 
 ```bash
-pip uninstall jupyterlab-pluginplayground
+pip uninstall jupyterlab-plugin-playground
 ```
 
 
@@ -128,7 +128,7 @@ The `jlpm` command is JupyterLab's pinned version of
 
 ```bash
 # Clone the repo to your local environment
-# Change directory to the jupyterlab-pluginplayground directory
+# Change directory to the jupyterlab-plugin-playground directory
 # Install package in development mode
 pip install -e .
 # Link your development version of the extension with JupyterLab
@@ -157,12 +157,12 @@ jupyter lab build --minimize=False
 ### Development uninstall
 
 ```bash
-pip uninstall jupyterlab-pluginplayground
+pip uninstall jupyterlab-plugin-playground
 ```
 
 In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
 command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
-folder is located. Then you can remove the symlink named `@jupyterlab/pluginplayground` within that folder.
+folder is located. Then you can remove the symlink named `@jupyterlab/plugin-playground` within that folder.
 
 ### Packaging the extension
 
