@@ -91,7 +91,7 @@ The Advanced Settings for the Plugin Playground enable you to configure plugins 
       "{ \n\
         id: 'MyConsoleLoggingPlugin', \n\
         autoStart: true, \n\
-        activate: function(app, palette) { \n\
+        activate: function(app) { \n\
           console.log('Activated!'); \n\
         } \n\
       }"
