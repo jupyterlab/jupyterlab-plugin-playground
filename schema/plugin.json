@@ -1,12 +1,9 @@
 {
-  "jupyter.lab.setting-icon-class": "NoneForNow",
-  "jupyter.lab.setting-icon-label": "Dynamic Extension Loader",
-  "title": "Dynamic Extension Loader",
-  "description": "Dynamic Extension Loader",
+  "title": "Plugin Playground",
   "properties": {
     "urls": {
-      "title": "List of URLs to fetch extensions from",
-      "description": "",
+      "title": "Plugin URLs",
+      "description": "List of URL strings that will be fetched and loaded as plugins automatically on startup.",
       "default": [],
       "type": "array",
       "items": {
@@ -14,8 +11,8 @@
       }
     },
     "extensions": {
-      "title": "List of extension text to load extension.",
-      "description": "",
+      "title": "Plugins",
+      "description": "List of strings of plugin text to load automatically. Line breaks are encoded as '\\n'",
       "default": [],
       "type": "array",
       "items": {
