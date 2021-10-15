@@ -74,7 +74,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
       // Define the widgets base module for RequireJS
       (window as any).define('@jupyter-widgets/base', [], () => base);
 
-      const commandID = 'LoadCurrentFileAsExtension';
+      const commandID =
+        '@jupyterlab/plugin-playground:LoadCurrentFileAsExtension';
       app.commands.addCommand(commandID, {
         label: 'Load current file as extension',
         isEnabled: () =>
