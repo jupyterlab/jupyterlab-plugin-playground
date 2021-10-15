@@ -2,60 +2,49 @@
 
 [![Github Actions Status](https://github.com/jupyterlab/jupyterlab-plugin-playground/workflows/Build/badge.svg)](https://github.com/jupyterlab/jupyterlab-plugin-playground/actions/workflows/build.yml)[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyterlab/jupyterlab-plugin-playground/main?urlpath=lab)
 
-A JupyterLab extension to load JupyterLab extensions (dynamically). 
+A JupyterLab extension to write and load simple JupyterLab plugins inside JupyterLab.
 
-One of the big impediments when developing JupyterLab (JLab) extensions is that it's currently required to 
-rebuild JupyterLab – and that takes time. JavaScript _used_ to be so easy! 
 
-This extension is trying to bring some of that old magic back, by dynamically loading and injecting JupyterLab extensions into JupyterLab.
-Just refresh JupyterLab to re-load the extension, no recompilation necessary!
+## Install
 
-Note that for real deployments, it might still be a lot better to actually compile the extension *into* JLab, to benefit from proper minimization and, more importantly, deduplication.
+This extension requires JupyterLab 3. Install this extension with pip:
 
-jupyterlab-plugin-playground uses require.js to dynamically load the extensions, and require.js supports the AMD module syntax. Using an AMD module, you can also dynamically load widget extensions to jupyterlab -- however, there is one caveat -- the widget needs to be loaded before opening the first notebook.
+```bash
+pip install jupyterlab-plugin-playground
+```
 
-As a dynamic extension cannot just use the JupyterLab modules, we dynamically look up the modules in the required section, and inject them from JLab. Here is an example for a dynamic extension:
+## How to use the Plugin Playground
+
+This extension provides a new command, `Load current file as extension`, available in the text editor.
+
+As an example, open the text editor by creating a new text file and paste this small JupyterLab plugin into it. This plugin will create a simple command `My Super Cool Toggle` in the command palette that can be toggled on and off.
 
 ```js
 {
-  id: 'mydynamicplugin',
-  autoStart: true,
+  id: 'MySuperCoolTogglePlugin',
+  autoStart: true, // Activate this plugin immediately
   requires: ["@jupyterlab/apputils:ICommandPalette"],
   activate: function(app, palette) {
-    console.log("Hello from a dynamically loaded plugin!");
-
-    // We can use `.app` here to do something with the JupyterLab
-    // app instance, such as adding a new command
-    let commandID = "MySuperCoolDynamicCommand";
-    let toggle = true;
+    let commandID = "MySuperCoolToggle";
+    let toggle = true; // The current toggle state
     app.commands.addCommand(commandID, {
-      label: 'My Super Cool Dynamic Command',
+      label: 'My Super Cool Toggle',
       isToggled: function() {
         return toggle;
       },
       execute: function() {
-        console.log("Executed " + commandID);
+        // Toggle the state
         toggle = !toggle;
       }
     });
 
-    palette.addItem({
-      command: commandID,
-      // make it appear right at the top!
-      category: 'AAA',
-      args: {}
-    });
+    palette.addItem({ command: commandID });
   }
 }
 ```
+While in the text editor, load this plugin in JupyterLab by invoking the Command Palette and executing `Load current file as extension`. Invoke the Command Palette again and you will see a new command "My Super Cool Toggle". Executing this new command will toggle the checkbox next to the command.
 
-As you can see, the dynamic extension returns exactly the same dictionary as one would from a regular JupyterLab extension.
-Part of the magic is in the `requires` -- these strings (TokenIDs) are inspected, and the live instance of the mentioned plugins is used to call the `activate` function (`app` always comes as default). In this case we are reqiring the `CommandPalette` in order to attach a new command to it.
-
-If you want to register a new widget library, for example, you would require the `"jupyter.extensions.jupyterWidgetRegistry"` instead.
-These tokens can be a little arbitrary, so at this point it might require some digging into the JupyterLab source code to figure out 
-
-Here is one example of dynamically loading the `bqplot` widget library from unpkg.com:
+As another more advanced example, we load the [bqplot](https://bqplot.readthedocs.io) Jupyter Widget library from the cloud using RequireJS. This assumes you have the [ipywidgets JupyterLab extension](https://ipywidgets.readthedocs.io/en/stable/user_install.html#installing-in-jupyterlab-3-0) installed.
 
 ```js
 {
@@ -63,17 +52,13 @@ Here is one example of dynamically loading the `bqplot` widget library from unpk
   autoStart: true,
   requires: ["jupyter.extensions.jupyterWidgetRegistry"],
   activate: function(app, widgets) {
+    // Set up RequireJS to pull packages from the jsdelivr CDN.
     require.config({
-      // take the widget from jsdelivr
       baseUrl: "https://cdn.jsdelivr.net/npm"
     });
-
-    let widget = 'bqplot';
-    // note that we are using require js here to load the AMD module
-    // requirejs is automatically loaded with @jupyterlab/plugin-playground.
-    // * (star) selects the latest version from jsdelivr, and then loads the `/dist/index.js` file
-    // the final URL will be something like https://cdn.jsdelivr.net/npm/bqplot@*/dist/index.js
-    require([widget + "@*/dist/index"], function(plugin) {
+    // Use RequireJS to load the AMD module. '@*' selects the latest version
+    // and `/dist/index.js` loads the corresponding module containing bqplot.
+    require(["bqplot@*/dist/index"], function(plugin) {
       widgets.registerWidget({
           name: widget,
           version: plugin.version,
@@ -82,49 +67,26 @@ Here is one example of dynamically loading the `bqplot` widget library from unpk
     });
   }
 }
-
 ```
 
-If you want to test some dynamic scripts locally, then there is also a small test server available under `/scripts` which serves the directory content.
+There are a few differences in how to write plugins in the Plugin Playground compared to writing plugins in a JupyterLab extension:
 
-### Loading from URL or current file
+* Plugins cannot import tokens from other packages, so we use the token names as strings in the `requires` and `optional` plugin fields rather than imported tokens. For example, we used the [ICommandPalette](https://github.com/jupyterlab/jupyterlab/blob/4169b7b684f6160b5a9ab093391ec531399dfa82/packages/apputils/src/tokens.ts#L16-L18) token name in the `requires` field above. The Plugin Playground will automatically change the token names to the corresponding tokens registered with the current JupyterLab when it loads the plugin. This means you can use token names for any extension currently loaded in JupyterLab, including non-core extensions.
+* To load code from a separate package, you can use RequireJS as in the example above to load bqplot. RequireJS comes with the Plugin Playground and can be used to load any AMD module.
+* You can only load a plugin with a given id once. If you make changes to your plugin, save it and refresh the JupyterLab page to be able to load it again.
 
-In the JupyterLab settings you can configure some URL's to load scripts automatically from (e.g. GitHub gists).
+## Advanced Settings
 
-And last but not least, you can also edit a JavaScript file inside JupyterLab, and then run the command "Load current file as extension" to load the current file as a JupyterLab extension. Note: currently it's only possible to run this command once for each `id`. To support loading the same widget multiple times, we would need to clear the previous extension - but this might not be side-effect free. We currently don't have a solution for this, but we could either add a `deactivate` function to call on clear, or we could just have the author of the extension make sure that reloading the extension is possible without breaking everything.
+The Advanced Settings for the Plugin Playground enable you to configure plugins to load every time JupyterLab starts up. Automatically loaded plugins can be configured in two ways:
 
-
-
-## Requirements
-
-* JupyterLab >= 3.0
-
-## Install
-
-To install the extension, execute:
-
-```bash
-pip install jupyterlab-plugin-playground
-```
-
-## Uninstall
-
-To remove the extension, execute:
-
-```bash
-pip uninstall jupyterlab-plugin-playground
-```
-
+* `urls` is a list of URLs that will be fetched and loaded as plugins automatically when JupyterLab starts up. For example, you can point to a GitHub gist or a file you host on a local server that serves text files like the above examples.
+* `plugins` is a list of strings of plugin text, like the examples above, that are loaded automatically when JupyterLab starts up. Since JSON strings cannot have multiple lines, you will need to encode any newlines in your plugin text directly as `\n`.
 
 ## Contributing
 
 ### Development install
 
-Note: You will need NodeJS to build the extension package.
-
-The `jlpm` command is JupyterLab's pinned version of
-[yarn](https://yarnpkg.com/) that is installed with JupyterLab. You may use
-`yarn` or `npm` in lieu of `jlpm` below.
+You will need NodeJS to build the extension package.
 
 ```bash
 # Clone the repo to your local environment
