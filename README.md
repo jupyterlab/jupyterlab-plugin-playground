@@ -38,7 +38,11 @@ As an example, open the text editor by creating a new text file and paste this s
       }
     });
 
-    palette.addItem({ command: commandID });
+    palette.addItem({
+      command: commandID,
+      // Sort to the top for convenience
+      category: "AAA"
+    });
   }
 }
 ```
@@ -60,7 +64,7 @@ As another more advanced example, we load the [bqplot](https://bqplot.readthedoc
     // and `/dist/index.js` loads the corresponding module containing bqplot.
     require(["bqplot@*/dist/index"], function(plugin) {
       widgets.registerWidget({
-          name: widget,
+          name: 'bqplot',
           version: plugin.version,
           exports: plugin
       });
@@ -80,7 +84,20 @@ There are a few differences in how to write plugins in the Plugin Playground com
 The Advanced Settings for the Plugin Playground enable you to configure plugins to load every time JupyterLab starts up. Automatically loaded plugins can be configured in two ways:
 
 * `urls` is a list of URLs that will be fetched and loaded as plugins automatically when JupyterLab starts up. For example, you can point to a GitHub gist or a file you host on a local server that serves text files like the above examples.
-* `plugins` is a list of strings of plugin text, like the examples above, that are loaded automatically when JupyterLab starts up. Since JSON strings cannot have multiple lines, you will need to encode any newlines in your plugin text directly as `\n`.
+* `plugins` is a list of strings of plugin text, like the examples above, that are loaded automatically when JupyterLab starts up. Since JSON strings cannot have multiple lines, you will need to encode any newlines in your plugin text directly as `\n\` (the second backslash is to allow the string to continue on the next line). For example, here is a user setting to encode a small plugin to run at startup:
+  ```json5
+  {
+    plugins: [
+      "{ \n\
+        id: 'MyConsoleLoggingPlugin', \n\
+        autoStart: true, \n\
+        activate: function(app, palette) { \n\
+          console.log('Activated!'); \n\
+        } \n\
+      }"
+    ]
+  }
+  ```
 
 ## Contributing
 
