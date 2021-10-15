@@ -10,7 +10,7 @@
         "type": "string"
       }
     },
-    "extensions": {
+    "plugins": {
       "title": "Plugins",
       "description": "List of strings of plugin text to load automatically. Line breaks are encoded as '\\n'",
       "default": [],

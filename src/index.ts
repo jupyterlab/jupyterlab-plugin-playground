@@ -101,8 +101,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
         for (const u of urls) {
           await get_module(u, app);
         }
-        const extensions = settings.composite.extensions as string[];
-        for (const t of extensions) {
+        const plugins = settings.composite.plugins as string[];
+        for (const t of plugins) {
           await load_plugin(t, app);
         }
       });
