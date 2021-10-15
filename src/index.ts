@@ -91,7 +91,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
       commandPalette.addItem({
         command: commandID,
-        category: 'Dynamic Extension Loader',
+        category: 'Plugin Playground',
         args: {}
       });
 
