@@ -74,7 +74,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
       // Define the widgets base module for RequireJS
       (window as any).define('@jupyter-widgets/base', [], () => base);
 
-      const commandID = 'LoadCurrentFileAsExtension';
+      const commandID =
+        '@jupyterlab/plugin-playground:LoadCurrentFileAsExtension';
       app.commands.addCommand(commandID, {
         label: 'Load current file as extension',
         isEnabled: () =>
@@ -91,7 +92,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
       commandPalette.addItem({
         command: commandID,
-        category: 'Dynamic Extension Loader',
+        category: 'Plugin Playground',
         args: {}
       });
 
@@ -101,8 +102,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
         for (const u of urls) {
           await get_module(u, app);
         }
-        const extensions = settings.composite.extensions as string[];
-        for (const t of extensions) {
+        const plugins = settings.composite.plugins as string[];
+        for (const t of plugins) {
           await load_plugin(t, app);
         }
       });
