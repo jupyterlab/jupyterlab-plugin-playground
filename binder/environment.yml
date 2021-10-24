@@ -19,3 +19,4 @@ dependencies:
   - wheel
   # additional packages for demos
   # - ipywidgets
+  - jupyterlab-lsp
