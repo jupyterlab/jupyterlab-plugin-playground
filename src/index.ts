@@ -77,7 +77,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
       const commandID =
         '@jupyterlab/plugin-playground:LoadCurrentFileAsExtension';
       app.commands.addCommand(commandID, {
-        label: 'Load current file as extension',
+        label: 'Load Current File As Extension',
         isEnabled: () =>
           editorTracker.currentWidget !== null &&
           editorTracker.currentWidget === app.shell.currentWidget,

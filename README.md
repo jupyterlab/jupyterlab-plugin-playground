@@ -15,7 +15,7 @@ pip install jupyterlab-plugin-playground
 
 ## How to use the Plugin Playground
 
-This extension provides a new command, `Load current file as extension`, available in the text editor.
+This extension provides a new command, `Load Current File As Extension`, available in the text editor.
 
 As an example, open the text editor by creating a new text file and paste this small JupyterLab plugin into it. This plugin will create a simple command `My Super Cool Toggle` in the command palette that can be toggled on and off.
 
@@ -46,7 +46,7 @@ As an example, open the text editor by creating a new text file and paste this s
   }
 }
 ```
-While in the text editor, load this plugin in JupyterLab by invoking the Command Palette and executing `Load current file as extension`. Invoke the Command Palette again and you will see a new command "My Super Cool Toggle". Executing this new command will toggle the checkbox next to the command.
+While in the text editor, load this plugin in JupyterLab by invoking the Command Palette and executing `Load Current File As Extension`. Invoke the Command Palette again and you will see a new command "My Super Cool Toggle". Executing this new command will toggle the checkbox next to the command.
 
 As another more advanced example, we load the [bqplot](https://bqplot.readthedocs.io) Jupyter Widget library from the cloud using RequireJS. This assumes you have the [ipywidgets JupyterLab extension](https://ipywidgets.readthedocs.io/en/stable/user_install.html#installing-in-jupyterlab-3-0) installed.
 
