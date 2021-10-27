@@ -43,7 +43,7 @@ _("jupyter", "server", "extension", "list")
 _("jupyter", "labextension", "list")
 
 # install javascript language server for autocompletion and error highlighting
-_("jlpm", "add", "javascript-typescript-langserver")
+_("jlpm", "add", "typescript-language-server")
 
 
 print("JupyterLab with @jupyterlab/plugin-playground is ready to run with:\n")
