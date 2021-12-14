@@ -8,6 +8,7 @@
 
         python3 binder/postBuild
 """
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -45,6 +46,10 @@ _("jupyter", "labextension", "list")
 # install javascript language server for autocompletion and error highlighting
 _("jlpm", "add", "typescript-language-server")
 
+# add overrides for LSP settings
+SETTINGS = Path(sys.prefix) / "share/jupyter/lab/settings"
+SETTINGS.mkdir(parents=True, exist_ok=True)
+shutil.copy2("binder/overrides.json", SETTINGS / "overrides.json")
 
 print("JupyterLab with @jupyterlab/plugin-playground is ready to run with:\n")
 print("\tjupyter lab\n")
