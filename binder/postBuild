@@ -44,7 +44,8 @@ _("jupyter", "server", "extension", "list")
 _("jupyter", "labextension", "list")
 
 # install javascript language server for autocompletion and error highlighting
-_("jlpm", "add", "typescript-language-server")
+# (typescript-language-server depends on tsutils which requires us to choose typescript version)
+_("jlpm", "add", "typescript-language-server", "typescript@4.1")
 
 # add overrides for LSP settings
 SETTINGS = Path(sys.prefix) / "share/jupyter/lab/settings"
