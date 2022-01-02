@@ -27,6 +27,22 @@ export namespace ImportResolver {
   }
 }
 
+function formatImport(data: PluginTranspiler.IImportStatement): string {
+  const tokens = ['import'];
+  if (data.isTypeOnly) {
+    tokens.push('type');
+  }
+  if (data.isDefault) {
+    tokens.push(`* as ${data.name}`);
+  } else {
+    const name = data.alias ? `${data.name} as ${data.alias}` : data.name;
+    tokens.push(data.unpack ? `{ ${name} }` : name);
+  }
+  tokens.push('from');
+  tokens.push(data.module);
+  return tokens.join(' ');
+}
+
 export class ImportResolver {
   constructor(private _options: ImportResolver.IOptions) {
     // no-op
@@ -49,11 +65,16 @@ export class ImportResolver {
       ) {
         const module = this._options.modules[data.module];
         if (!Object.prototype.hasOwnProperty.call(module, data.name)) {
-          // TODO: do not warn on type-only imports like
-          // `import type { JupyterFrontEndPlugin } from ...`
-          console.warn(
-            `Module ${data.module} does not have a property ${data.name}; it is ok if it is type`
-          );
+          if (!data.isTypeOnly) {
+            const equivalentTypeImport = formatImport({
+              ...data,
+              isTypeOnly: true
+            });
+            console.warn(
+              `Module ${data.module} does not have a property ${data.name}; if it is type import,` +
+                ` use \`${equivalentTypeImport}\` to avoid this warning.`
+            );
+          }
         }
         return resolve(module[data.name]);
       }

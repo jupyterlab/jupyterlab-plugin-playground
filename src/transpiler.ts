@@ -16,6 +16,8 @@ export namespace PluginTranspiler {
     alias?: string;
     module: string;
     unpack: boolean;
+    isTypeOnly: boolean;
+    isDefault?: boolean;
   }
 }
 
@@ -50,40 +52,58 @@ export class PluginTranspiler {
       return [];
     }
     const module = node.moduleSpecifier.text;
-    const importClause = node.importClause;
+    const clause = node.importClause;
 
-    if (!importClause) {
+    if (!clause) {
       return [];
     }
-    if (!importClause.namedBindings) {
-      if (importClause.name) {
+    if (!clause.namedBindings) {
+      if (clause.name) {
         return [
           {
-            name: importClause.name.text,
+            // import bqplot from 'bqplot@*/dist/index';
+            name: clause.name.text,
             module: module,
-            unpack: false
+            unpack: false,
+            isTypeOnly: clause.isTypeOnly,
+            isDefault: true
           }
         ];
       } else {
         return [];
       }
     }
-    const bindings = importClause.namedBindings;
+    const bindings = clause.namedBindings;
+    if (ts.isNamespaceImport(bindings)) {
+      return [
+        {
+          // import * as bqplot from 'bqplot@*/dist/index';
+          name: bindings.name.text,
+          module: module,
+          unpack: false,
+          isTypeOnly: clause.isTypeOnly
+        }
+      ];
+    }
     if (!ts.isNamedImports(bindings)) {
       return [];
     }
     return bindings.elements.map(binding => {
       return binding.propertyName
         ? {
+            // import { ICommandPalette as x } from '@jupyterlab/apputils';
             name: binding.propertyName.text,
             alias: binding.name.text,
             module: module,
-            unpack: true
+            unpack: true,
+            isTypeOnly: clause.isTypeOnly
           }
         : {
+            // import { ICommandPalette } from '@jupyterlab/apputils';
             name: binding.name.text,
             module: module,
-            unpack: true
+            unpack: true,
+            isTypeOnly: clause.isTypeOnly
           };
     });
   }
