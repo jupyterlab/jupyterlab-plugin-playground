@@ -23,9 +23,13 @@ import { extensionIcon } from '@jupyterlab/ui-components';
 
 import { PluginLoader, PluginLoadingError } from './loader';
 
+import { PluginTranspiler } from './transpiler';
+
 import { modules } from './modules';
 
-import { formatImportError, formatErrorWithResult } from './errors';
+import { formatErrorWithResult } from './errors';
+
+import { ImportResolver, getRequireJS } from './resolver';
 
 namespace CommandIDs {
   export const createNewFile = 'plugin-playground:create-new-plugin';
@@ -54,35 +58,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
 export default plugin;
 `;
 
-function getRequireJS(): Require {
-  return (window as any).require;
-}
-
-function handleImportError(error: Error, data: PluginLoader.IImportStatement) {
-  showDialog({
-    title: `Import in plugin code failed: ${error.message}`,
-    body: formatImportError(error, data)
-  });
-}
-
-async function resolveImportStatement(data: PluginLoader.IImportStatement) {
-  return new Promise((resolve, reject) => {
-    const require = getRequireJS();
-    try {
-      require([data.module], (mod: any) => {
-        if (data.unpack) {
-          resolve(mod[data.name]);
-        } else {
-          resolve(mod);
-        }
-      }, (error: Error) => handleImportError(error, data));
-    } catch (error) {
-      handleImportError(error as Error, data);
-      reject();
-    }
-  });
-}
-
 async function loadPlugin(code: string, app: JupyterFrontEnd) {
   const tokenMap = new Map(
     Array.from((app as any)._serviceMap.keys()).map((t: any) => [t.name, t])
@@ -92,15 +67,21 @@ async function loadPlugin(code: string, app: JupyterFrontEnd) {
     '@jupyter-widgets/base:IJupyterWidgetRegistry',
     tokenMap.get('jupyter.extensions.jupyterWidgetRegistry')
   );
+  const importResolver = new ImportResolver({
+    modules: modules,
+    tokenMap: tokenMap
+  });
+
   console.log(tokenMap);
   const pluginLoader = new PluginLoader({
-    compilerOptions: {
-      module: ts.ModuleKind.ES2020,
-      target: ts.ScriptTarget.ES2017
-    },
-    modules: modules,
-    tokenMap: tokenMap,
-    importFunction: resolveImportStatement
+    transpiler: new PluginTranspiler({
+      compilerOptions: {
+        module: ts.ModuleKind.ES2020,
+        target: ts.ScriptTarget.ES2017
+      }
+    }),
+    importFunction: importResolver.resolve.bind(importResolver),
+    tokenMap: tokenMap
   });
   let result;
   try {
