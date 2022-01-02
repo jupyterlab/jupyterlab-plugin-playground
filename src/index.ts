@@ -32,7 +32,7 @@ const PLUGIN_TEMPLATE = `import {
 } from '@jupyterlab/application';
 
 /**
- * This is an example hellow world plugin.
+ * This is an example hello world plugin.
  * Open Command Palette with Ctrl+Shift+C
  * (Command+Shift+C on Mac) and select
  * "Load Current File as Extension"

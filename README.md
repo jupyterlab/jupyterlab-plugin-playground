@@ -63,8 +63,7 @@ import { IJupyterWidgetRegistry } from '@jupyter-widgets/base';
 // from the CDN configured in Settings (`packageRegistryBaseUrl`).
 import bqplot from "bqplot@*/dist/index";
 
-export default plugin;
-{
+const plugin = {
   id: 'mydynamicwidget',
   autoStart: true,
   requires: [IJupyterWidgetRegistry],
@@ -76,6 +75,7 @@ export default plugin;
     });
   }
 }
+export default plugin;
 ```
 
 There are a few differences in how to write plugins in the Plugin Playground compared to writing plugins in a JupyterLab extension:
