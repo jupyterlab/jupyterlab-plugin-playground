@@ -2,6 +2,8 @@
 
 The extension can be published to `PyPI` and `npm` manually or using the [Jupyter Releaser](https://github.com/jupyter-server/jupyter_releaser).
 
+To refresh the packages list run `python scripts/modules.py` with the target version of JupyterLab installed.
+
 ## Manual release
 
 ### Python package
