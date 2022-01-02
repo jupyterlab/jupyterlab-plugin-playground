@@ -7,7 +7,11 @@ import {
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
-import { ICommandPalette } from '@jupyterlab/apputils';
+import {
+  showDialog,
+  showErrorMessage,
+  ICommandPalette
+} from '@jupyterlab/apputils';
 
 import { IDocumentWidget } from '@jupyterlab/docregistry';
 
@@ -20,6 +24,8 @@ import { extensionIcon } from '@jupyterlab/ui-components';
 import { PluginLoader } from './loader';
 
 import { modules } from './modules';
+
+import { formatActivationError } from './errors';
 
 namespace CommandIDs {
   export const createNewFile = 'plugin-playground:create-new-plugin';
@@ -52,6 +58,12 @@ async function loadPlugin(code: string, app: JupyterFrontEnd) {
   const tokenMap = new Map(
     Array.from((app as any)._serviceMap.keys()).map((t: any) => [t.name, t])
   );
+  // Widget registry does not follow convention of importName:tokenName
+  tokenMap.set(
+    '@jupyter-widgets/base:IJupyterWidgetRegistry',
+    tokenMap.get('jupyter.extensions.jupyterWidgetRegistry')
+  );
+  console.log(tokenMap);
   const pluginLoader = new PluginLoader({
     compilerOptions: {
       module: ts.ModuleKind.ES2020,
@@ -60,7 +72,14 @@ async function loadPlugin(code: string, app: JupyterFrontEnd) {
     modules: modules,
     tokenMap: tokenMap
   });
-  const plugin = await pluginLoader.load(code);
+  let result;
+  try {
+    result = await pluginLoader.load(code);
+  } catch (e) {
+    showErrorMessage('Plugin loading failed', (e as Error).message);
+    return;
+  }
+  const plugin = result.plugin;
 
   // Unregister plugin if already registered.
   if (app.hasPlugin(plugin.id)) {
@@ -68,7 +87,15 @@ async function loadPlugin(code: string, app: JupyterFrontEnd) {
   }
   (app as any).registerPluginModule(plugin);
   if (plugin.autoStart) {
-    await app.activatePlugin(plugin.id);
+    try {
+      await app.activatePlugin(plugin.id);
+    } catch (e) {
+      showDialog({
+        title: `Plugin autostart failed: ${(e as Error).message}`,
+        body: formatActivationError(e, result)
+      });
+      return;
+    }
   }
 }
 

@@ -14,11 +14,20 @@ function escape(x: string): string {
   return x.replace(/(['\\])/g, '\\$1');
 }
 
-namespace PluginLoader {
+function isString(value: any): value is string {
+  return typeof value === 'string' || value instanceof String;
+}
+
+export namespace PluginLoader {
   export interface IOptions {
     compilerOptions: ts.CompilerOptions & { target: ts.ScriptTarget };
     modules: Record<string, any>;
     tokenMap: Map<string, Token<any>>;
+  }
+  export interface IResult {
+    plugin: IPlugin<any, any>;
+    code: string;
+    transpiled: boolean;
   }
 }
 
@@ -49,22 +58,26 @@ export class PluginLoader {
   /**
    * Create a plugin from TypeScript code.
    */
-  async load(code: string): Promise<IPlugin<any, any>> {
-    const functionBody = this.transpile(code);
+  async load(code: string): Promise<PluginLoader.IResult> {
+    let functionBody = this.transpile(code);
     console.log(functionBody);
     let plugin;
+    let transpiled = true;
 
     try {
       plugin = await new AsyncFunction(this._modulesArgumentName, functionBody)(
         this._options.modules
       );
+
       // no export/return statment
       if (plugin == null) {
         // for compatibility with older version
         console.log(
           'No value was returned by the transpiled plugin, falling back to simpler legacy evaluation'
         );
-        plugin = new Function(`'use strict';return (${code})`)();
+        functionBody = `'use strict';\nreturn (${code})`;
+        transpiled = false;
+        plugin = new Function(functionBody)();
       }
     } catch (e) {
       alert(`Problem loading extension: ${e}
@@ -81,7 +94,11 @@ export class PluginLoader {
     // Finally, we allow returning a promise (or an async function above).
     plugin = (await Promise.resolve(plugin)) as IPlugin<any, any>;
 
-    plugin.requires = plugin.requires?.map((value: any) => {
+    plugin.requires = plugin.requires?.map((value: string | Token<any>) => {
+      if (!isString(value)) {
+        // already a token
+        return value;
+      }
       const token = this._options.tokenMap.get(value);
       if (!token) {
         throw Error('Required token' + value + 'not found in the token map');
@@ -89,7 +106,11 @@ export class PluginLoader {
       return token;
     });
     plugin.optional = plugin.optional
-      ?.map((value: any) => {
+      ?.map((value: string | Token<any>) => {
+        if (!isString(value)) {
+          // already a token
+          return value;
+        }
         const token = this._options.tokenMap.get(value);
         if (!token) {
           console.log('Optional token' + value + 'not found in the token map');
@@ -97,7 +118,11 @@ export class PluginLoader {
         return token;
       })
       .filter((token): token is Token<any> => token != null);
-    return plugin;
+    return {
+      plugin,
+      code: functionBody,
+      transpiled
+    };
   }
 
   private _collectImports(node: ts.ImportDeclaration): IImportedName[] {
@@ -200,9 +225,9 @@ export class PluginLoader {
         if (ts.isImportDeclaration(node)) {
           const detectedImports = this._collectImports(node);
 
-          if (!detectedImports) {
+          if (!detectedImports || !detectedImports.length) {
             alert('Unsupported import encountered: ' + node.getFullText());
-            console.error('Unsupported import:', node.getFullText(), node);
+            console.error('Unsupported import:' + node.getFullText(), node);
             // return createImportFromWithRequireJS(candidateToken.importedName, candidateToken.module);
             return ts.visitEachChild(node, child => visit(child), context);
           }
