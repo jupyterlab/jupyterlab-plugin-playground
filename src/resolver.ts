@@ -49,6 +49,8 @@ export class ImportResolver {
       ) {
         const module = this._options.modules[data.module];
         if (!Object.prototype.hasOwnProperty.call(module, data.name)) {
+          // TODO: do not warn on type-only imports like
+          // `import type { JupyterFrontEndPlugin } from ...`
           console.warn(
             `Module ${data.module} does not have a property ${data.name}; it is ok if it is type`
           );
