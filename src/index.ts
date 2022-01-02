@@ -71,7 +71,7 @@ async function resolveImportStatement(data: PluginLoader.IImportStatement) {
     try {
       require([data.module], (mod: any) => {
         if (data.unpack) {
-          resolve(mod[data.importedName]);
+          resolve(mod[data.name]);
         } else {
           resolve(mod);
         }

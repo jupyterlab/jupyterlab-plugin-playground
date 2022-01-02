@@ -26,7 +26,7 @@ export function formatImportError(
 ): JSX.Element {
   return (
     <div>
-      Error when importing <code>{data.importedName}</code> from{' '}
+      Error when importing <code>{data.name}</code> from{' '}
       <code>{data.module}</code> (
       {data.unpack ? 'with unpacking' : 'without unpacking'}):
       <pre>{error.stack ? error.stack : error.message}</pre>

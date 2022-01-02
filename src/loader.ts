@@ -39,7 +39,8 @@ export namespace PluginLoader {
    * Internal representation of import statments.
    */
   export interface IImportStatement {
-    importedName: string;
+    name: string;
+    alias?: string;
     module: string;
     unpack: boolean;
   }
@@ -164,7 +165,7 @@ export class PluginLoader {
       if (importClause.name) {
         return [
           {
-            importedName: importClause.name.text,
+            name: importClause.name.text,
             module: module,
             unpack: false
           }
@@ -179,13 +180,18 @@ export class PluginLoader {
     }
     return bindings.elements.map(importedNameNode => {
       return {
-        importedName: importedNameNode.name.text,
+        name: importedNameNode.name.text,
         module: module,
         unpack: true
       };
     });
   }
 
+  /**
+   * Instead of manually creating the nodes we create the AST from string
+   * pretending it is a source file (which might be less performant,
+   * but better easier to maintain).
+   */
   private _nodesFromString(code: string): ts.Node[] {
     // new lines make reading the code easier when debugging plugins
     const sourceFile = ts.createSourceFile(
@@ -199,11 +205,8 @@ export class PluginLoader {
   private _createImportFromWithRequireJS(
     data: PluginLoader.IImportStatement
   ): ts.Node[] {
-    // Instead of manually creating the nodes we create the AST
-    // pretending it is a source file (which might be less performant,
-    // but better from maintenance perspective).
     // TODO: raise if not a valide name:
-    const name = data.importedName;
+    const name = data.alias ? data.alias : data.name;
     const dataJSON = JSON.stringify(data);
     return this._nodesFromString(`
         const ${name} = await ${this._importFunctionName}(${dataJSON})`);
@@ -230,11 +233,10 @@ export class PluginLoader {
   }
 
   private _createImportFromKnownModule(
-    importedName: string,
-    importFrom: string
+    data: PluginLoader.IImportStatement
   ): ts.Node[] {
-    const from = escape(importFrom);
-    const name = escape(importedName); // this should not be neeed
+    const from = escape(data.module);
+    const name = data.alias ? data.alias : data.name;
     return this._nodesFromString(
       `const ${name} = ${this._modulesArgumentName}['${from}']['${name}'];`
     );
@@ -260,29 +262,21 @@ export class PluginLoader {
           }
 
           return ([] as ts.Node[]).concat(
-            ...detectedImports.map(importData => {
-              const tokenName = `${importData.module}:${importData.importedName}`;
+            ...detectedImports.map(data => {
+              const tokenName = `${data.module}:${data.name}`;
               if (this._options.tokenMap.has(tokenName)) {
-                return [
-                  this._createStringAssignment(
-                    importData.importedName,
-                    tokenName
-                  )
-                ];
+                return [this._createStringAssignment(data.name, tokenName)];
               }
               if (
                 Object.prototype.hasOwnProperty.call(
                   this._options.modules,
-                  importData.module
+                  data.module
                 )
               ) {
-                return this._createImportFromKnownModule(
-                  importData.importedName,
-                  importData.module
-                );
+                return this._createImportFromKnownModule(data);
               }
               node.decorators;
-              return this._createImportFromWithRequireJS(importData);
+              return this._createImportFromWithRequireJS(data);
             })
           );
         } else {
@@ -322,7 +316,8 @@ export class PluginLoader {
             defaultExport = node.expression;
           } else {
             console.warn(
-              'Export declaration not supported: ' + node.getText(),
+              'Export assignment without default keyword not supported: ' +
+                node.getText(),
               node
             );
           }
