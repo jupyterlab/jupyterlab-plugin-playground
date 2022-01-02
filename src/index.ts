@@ -21,11 +21,11 @@ import { ILauncher } from '@jupyterlab/launcher';
 
 import { extensionIcon } from '@jupyterlab/ui-components';
 
-import { PluginLoader } from './loader';
+import { PluginLoader, PluginLoadingError } from './loader';
 
 import { modules } from './modules';
 
-import { formatImportError, formatActivationError } from './errors';
+import { formatImportError, formatErrorWithResult } from './errors';
 
 namespace CommandIDs {
   export const createNewFile = 'plugin-playground:create-new-plugin';
@@ -105,8 +105,16 @@ async function loadPlugin(code: string, app: JupyterFrontEnd) {
   let result;
   try {
     result = await pluginLoader.load(code);
-  } catch (e) {
-    showErrorMessage('Plugin loading failed', (e as Error).message);
+  } catch (error) {
+    if (error instanceof PluginLoadingError) {
+      const internalError = error.error;
+      showDialog({
+        title: `Plugin loading failed: ${internalError.message}`,
+        body: formatErrorWithResult(error, error.partialResult)
+      });
+    } else {
+      showErrorMessage('Plugin loading failed', (error as Error).message);
+    }
     return;
   }
   const plugin = result.plugin;
@@ -122,7 +130,7 @@ async function loadPlugin(code: string, app: JupyterFrontEnd) {
     } catch (e) {
       showDialog({
         title: `Plugin autostart failed: ${(e as Error).message}`,
-        body: formatActivationError(e, result)
+        body: formatErrorWithResult(e, result)
       });
       return;
     }

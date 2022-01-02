@@ -10,6 +10,19 @@ function isString(value: any): value is string {
   return typeof value === 'string' || value instanceof String;
 }
 
+class NoDefaultExportError extends Error {
+  // no-op
+}
+
+export class PluginLoadingError extends Error {
+  constructor(
+    public error: Error,
+    public partialResult: Omit<PluginLoader.IResult, 'plugin'>
+  ) {
+    super();
+  }
+}
+
 export namespace PluginLoader {
   export interface IOptions {
     compilerOptions: ts.CompilerOptions & { target: ts.ScriptTarget };
@@ -49,7 +62,7 @@ export class PluginLoader {
     const result = ts.transpileModule(code, {
       compilerOptions: this._options.compilerOptions,
       transformers: {
-        before: [this._importTransformer(), this.exportDefaultTransformer()]
+        before: [this._importTransformer(), this._exportDefaultTransformer()]
       }
     });
     // Module rules add empty `export` even after we replaced it in AST,
@@ -61,33 +74,39 @@ export class PluginLoader {
    * Create a plugin from TypeScript code.
    */
   async load(code: string): Promise<PluginLoader.IResult> {
-    let functionBody = this.transpile(code);
-    console.log(functionBody);
+    let functionBody: string;
     let plugin;
     let transpiled = true;
-
     try {
-      plugin = await new AsyncFunction(
-        this._modulesArgumentName,
-        this._importFunctionName,
-        functionBody
-      )(this._options.modules, this._options.importFunction);
-
-      // no export/return statment
-      if (plugin == null) {
+      functionBody = this.transpile(code);
+    } catch (error) {
+      if (error instanceof NoDefaultExportError) {
+        // no export statment
         // for compatibility with older version
         console.log(
           'No value was returned by the transpiled plugin, falling back to simpler legacy evaluation'
         );
         functionBody = `'use strict';\nreturn (${code})`;
         transpiled = false;
+      } else {
+        throw error;
+      }
+    }
+
+    console.log(functionBody);
+
+    try {
+      if (transpiled) {
+        plugin = await new AsyncFunction(
+          this._modulesArgumentName,
+          this._importFunctionName,
+          functionBody
+        )(this._options.modules, this._options.importFunction);
+      } else {
         plugin = new Function(functionBody)();
       }
     } catch (e) {
-      alert(`Problem loading extension: ${e}
-
-        ${functionBody}`);
-      throw e;
+      throw new PluginLoadingError(e, { code: functionBody, transpiled });
     }
 
     // We allow one level of indirection (return a function instead of a plugin)
@@ -275,30 +294,56 @@ export class PluginLoader {
     };
   }
 
-  private exportDefaultTransformer<
-    T extends ts.Node
-  >(): ts.TransformerFactory<T> {
+  private _exportDefaultTransformer(): ts.TransformerFactory<ts.SourceFile> {
     return context => {
+      let defaultExport: ts.Expression | null = null;
+
       const visit: ts.Visitor = node => {
         if (ts.isExportSpecifier(node)) {
-          console.log('TODO: export specifier', node, ts.isDefaultClause(node));
+          console.warn(
+            'Export specifier not supported: ' + node.getText(),
+            node
+          );
+          return;
         }
         if (ts.isExportDeclaration(node)) {
-          console.log(
-            'TODO: export declaration',
-            node,
-            ts.isDefaultClause(node)
+          console.warn(
+            'Export declaration not supported: ' + node.getText(),
+            node
           );
+          return;
         }
 
         if (ts.isExportAssignment(node)) {
-          return ts.factory.createReturnStatement(node.expression);
+          const hasDefaultClause = node
+            .getChildren()
+            .some(node => node.kind === ts.SyntaxKind.DefaultKeyword);
+          if (hasDefaultClause) {
+            defaultExport = node.expression;
+          } else {
+            console.warn(
+              'Export declaration not supported: ' + node.getText(),
+              node
+            );
+          }
+          return;
         } else {
           return ts.visitEachChild(node, child => visit(child), context);
         }
       };
 
-      return node => ts.visitNode(node, visit);
+      return source => {
+        const withoutExports = ts.visitNode(source, visit);
+        if (!defaultExport) {
+          throw new NoDefaultExportError('Default export not found');
+        }
+        return ts.factory.updateSourceFile(withoutExports, [
+          // original statements
+          ...withoutExports.statements,
+          // the default export as returned value
+          ts.factory.createReturnStatement(defaultExport)
+        ]);
+      };
     };
   }
 }

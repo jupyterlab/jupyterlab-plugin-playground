@@ -2,9 +2,9 @@ import * as React from 'react';
 
 import { PluginLoader } from './loader';
 
-export function formatActivationError(
+export function formatErrorWithResult(
   error: Error,
-  result: PluginLoader.IResult
+  result: Omit<PluginLoader.IResult, 'plugin'>
 ): JSX.Element {
   return (
     <div>
