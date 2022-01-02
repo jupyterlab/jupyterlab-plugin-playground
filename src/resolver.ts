@@ -47,7 +47,15 @@ export class ImportResolver {
       if (
         Object.prototype.hasOwnProperty.call(this._options.modules, data.module)
       ) {
-        return resolve(this._options.modules[data.module][data.name]);
+        const module = this._options.modules[data.module];
+        if (!Object.prototype.hasOwnProperty.call(module, data.name)) {
+          const error = new Error(
+            `Module ${data.module} does not have a property ${data.name}`
+          );
+          handleImportError(error, data);
+          return reject();
+        }
+        return resolve(module[data.name]);
       }
 
       const require = getRequireJS();
