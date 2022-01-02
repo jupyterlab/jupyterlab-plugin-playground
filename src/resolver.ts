@@ -49,11 +49,9 @@ export class ImportResolver {
       ) {
         const module = this._options.modules[data.module];
         if (!Object.prototype.hasOwnProperty.call(module, data.name)) {
-          const error = new Error(
-            `Module ${data.module} does not have a property ${data.name}`
+          console.warn(
+            `Module ${data.module} does not have a property ${data.name}; it is ok if it is type`
           );
-          handleImportError(error, data);
-          return reject();
         }
         return resolve(module[data.name]);
       }
