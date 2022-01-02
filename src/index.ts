@@ -25,7 +25,7 @@ import { PluginLoader } from './loader';
 
 import { modules } from './modules';
 
-import { formatActivationError } from './errors';
+import { formatImportError, formatActivationError } from './errors';
 
 namespace CommandIDs {
   export const createNewFile = 'plugin-playground:create-new-plugin';
@@ -54,6 +54,35 @@ const plugin: JupyterFrontEndPlugin<void> = {
 export default plugin;
 `;
 
+function getRequireJS(): Require {
+  return (window as any).require;
+}
+
+function handleImportError(error: Error, data: PluginLoader.IImportStatement) {
+  showDialog({
+    title: `Import in plugin code failed: ${error.message}`,
+    body: formatImportError(error, data)
+  });
+}
+
+async function resolveImportStatement(data: PluginLoader.IImportStatement) {
+  return new Promise((resolve, reject) => {
+    const require = getRequireJS();
+    try {
+      require([data.module], (mod: any) => {
+        if (data.unpack) {
+          resolve(mod[data.importedName]);
+        } else {
+          resolve(mod);
+        }
+      }, (error: Error) => handleImportError(error, data));
+    } catch (error) {
+      handleImportError(error as Error, data);
+      reject();
+    }
+  });
+}
+
 async function loadPlugin(code: string, app: JupyterFrontEnd) {
   const tokenMap = new Map(
     Array.from((app as any)._serviceMap.keys()).map((t: any) => [t.name, t])
@@ -70,7 +99,8 @@ async function loadPlugin(code: string, app: JupyterFrontEnd) {
       target: ts.ScriptTarget.ES2017
     },
     modules: modules,
-    tokenMap: tokenMap
+    tokenMap: tokenMap,
+    importFunction: resolveImportStatement
   });
   let result;
   try {
@@ -191,8 +221,9 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
       app.restored.then(async () => {
         const settings = await settingRegistry.load(plugin.id);
-        (window as any).require.config({
-          baseUrl: settings.composite.packageRegistryBaseUrl
+        const baseURL = settings.composite.packageRegistryBaseUrl as string;
+        getRequireJS().config({
+          baseUrl: baseURL
         });
         const urls = settings.composite.urls as string[];
         for (const u of urls) {

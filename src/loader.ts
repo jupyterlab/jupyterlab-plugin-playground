@@ -2,14 +2,6 @@ import ts from 'typescript';
 import { Token } from '@lumino/coreutils';
 import { IPlugin } from '@lumino/application';
 
-/**
- * Internal representation of import statments.
- */
-interface IImportedName {
-  importedName: string;
-  module: string;
-}
-
 function escape(x: string): string {
   return x.replace(/(['\\])/g, '\\$1');
 }
@@ -23,11 +15,20 @@ export namespace PluginLoader {
     compilerOptions: ts.CompilerOptions & { target: ts.ScriptTarget };
     modules: Record<string, any>;
     tokenMap: Map<string, Token<any>>;
+    importFunction(statement: PluginLoader.IImportStatement): any;
   }
   export interface IResult {
     plugin: IPlugin<any, any>;
     code: string;
     transpiled: boolean;
+  }
+  /**
+   * Internal representation of import statments.
+   */
+  export interface IImportStatement {
+    importedName: string;
+    module: string;
+    unpack: boolean;
   }
 }
 
@@ -38,6 +39,7 @@ const AsyncFunction = Object.getPrototypeOf(async () => {
 export class PluginLoader {
   private _options: PluginLoader.IOptions;
   private _modulesArgumentName = '_PLUGIN_PLAYGROUND_MODULES';
+  private _importFunctionName = '_PLUGIN_IMPORT';
 
   constructor(options: PluginLoader.IOptions) {
     this._options = options;
@@ -65,9 +67,11 @@ export class PluginLoader {
     let transpiled = true;
 
     try {
-      plugin = await new AsyncFunction(this._modulesArgumentName, functionBody)(
-        this._options.modules
-      );
+      plugin = await new AsyncFunction(
+        this._modulesArgumentName,
+        this._importFunctionName,
+        functionBody
+      )(this._options.modules, this._options.importFunction);
 
       // no export/return statment
       if (plugin == null) {
@@ -125,23 +129,40 @@ export class PluginLoader {
     };
   }
 
-  private _collectImports(node: ts.ImportDeclaration): IImportedName[] {
+  private _collectImports(
+    node: ts.ImportDeclaration
+  ): PluginLoader.IImportStatement[] {
     if (!ts.isStringLiteral(node.moduleSpecifier)) {
       return [];
     }
     const module = node.moduleSpecifier.text;
+    const importClause = node.importClause;
 
-    if (!node.importClause || !node.importClause.namedBindings) {
+    if (!importClause) {
       return [];
     }
-    const bindings = node.importClause.namedBindings;
+    if (!importClause.namedBindings) {
+      if (importClause.name) {
+        return [
+          {
+            importedName: importClause.name.text,
+            module: module,
+            unpack: false
+          }
+        ];
+      } else {
+        return [];
+      }
+    }
+    const bindings = importClause.namedBindings;
     if (!ts.isNamedImports(bindings)) {
       return [];
     }
     return bindings.elements.map(importedNameNode => {
       return {
         importedName: importedNameNode.name.text,
-        module: module
+        module: module,
+        unpack: true
       };
     });
   }
@@ -157,29 +178,16 @@ export class PluginLoader {
   }
 
   private _createImportFromWithRequireJS(
-    importedName: string,
-    importFrom: string
+    data: PluginLoader.IImportStatement
   ): ts.Node[] {
     // Instead of manually creating the nodes we create the AST
     // pretending it is a source file (which might be less performant,
     // but better from maintenance perspective).
-    const from = escape(importFrom);
-    const name = escape(importedName); // this should not be neeed
+    // TODO: raise if not a valide name:
+    const name = data.importedName;
+    const dataJSON = JSON.stringify(data);
     return this._nodesFromString(`
-        const ${name} = await new Promise((resolve, reject) => {
-            try {
-                require(['${from}'], function(mod) {
-                    resolve(mod['${name}']);
-                }, function(error) {
-                    const hint = '';
-                    alert('Could not import ${from} from ${name}: ' + error + hint);
-                });
-            } catch (error) {
-                const hint = '';
-                alert('Could not import ${from} from ${name}: ' + error + hint);
-                reject();
-            }
-        });`);
+        const ${name} = await ${this._importFunctionName}(${dataJSON})`);
   }
 
   private _createStringAssignment(
@@ -254,10 +262,8 @@ export class PluginLoader {
                   importData.module
                 );
               }
-              return this._createImportFromWithRequireJS(
-                importData.importedName,
-                importData.module
-              );
+              node.decorators;
+              return this._createImportFromWithRequireJS(importData);
             })
           );
         } else {
