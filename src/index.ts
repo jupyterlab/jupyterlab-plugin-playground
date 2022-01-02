@@ -1,3 +1,5 @@
+import ts from 'typescript';
+
 import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
@@ -7,47 +9,73 @@ import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { ICommandPalette } from '@jupyterlab/apputils';
 
-import { IEditorTracker } from '@jupyterlab/fileeditor';
+import { IDocumentWidget } from '@jupyterlab/docregistry';
 
-import * as base from '@jupyter-widgets/base';
+import { FileEditor, IEditorTracker } from '@jupyterlab/fileeditor';
 
-async function load_plugin(code: string, app: JupyterFrontEnd) {
-  const token_map = new Map(
+import { ILauncher } from '@jupyterlab/launcher';
+
+import { extensionIcon } from '@jupyterlab/ui-components';
+
+import { PluginLoader } from './loader';
+
+import { modules } from './modules';
+
+namespace CommandIDs {
+  export const createNewFile = 'plugin-playground:create-new-plugin';
+  export const loadCurrentAsExtension = 'plugin-playground:load-as-extension';
+}
+
+const PLUGIN_TEMPLATE = `import {
+  JupyterFrontEnd,
+  JupyterFrontEndPlugin,
+} from '@jupyterlab/application';
+
+/**
+ * This is an example hellow world plugin.
+ * Open Command Palette with Ctrl+Shift+C
+ * (Command+Shift+C on Mac) and select
+ * "Load Current File as Extension"
+ */
+const plugin: JupyterFrontEndPlugin<void> = {
+  id: 'hello-world:plugin',
+  autoStart: true,
+  activate: (app: JupyterFrontEnd) => {
+    alert('Hello World!');
+  },
+};
+
+export default plugin;
+`;
+
+async function loadPlugin(code: string, app: JupyterFrontEnd) {
+  const tokenMap = new Map(
     Array.from((app as any)._serviceMap.keys()).map((t: any) => [t.name, t])
   );
+  const pluginLoader = new PluginLoader({
+    compilerOptions: {
+      module: ts.ModuleKind.ES2020,
+      target: ts.ScriptTarget.ES2017
+    },
+    modules: modules,
+    tokenMap: tokenMap
+  });
+  const plugin = await pluginLoader.load(code);
 
-  const functionBody = `'use strict';return (${code})`;
-  console.log(functionBody);
-  let plugin;
-  try {
-    plugin = new Function(functionBody)();
-  } catch (e) {
-    alert(`Problem loading extension: ${e}
-    
-    ${functionBody}`);
-    throw e;
+  // Unregister plugin if already registered.
+  if (app.hasPlugin(plugin.id)) {
+    delete (app as any)._pluginMap[plugin.id];
   }
-  // We allow one level of indirection (return a function instead of a plugin)
-  if (typeof plugin === 'function') {
-    plugin = plugin();
-  }
-
-  // Finally, we allow returning a promise (or an async function above).
-  plugin = await Promise.resolve(plugin);
-
-  plugin.requires = plugin.requires?.map((value: any) => token_map.get(value));
-  plugin.optional = plugin.optional?.map((value: any) => token_map.get(value));
-
   (app as any).registerPluginModule(plugin);
   if (plugin.autoStart) {
     await app.activatePlugin(plugin.id);
   }
 }
 
-async function get_module(url: string, app: JupyterFrontEnd) {
+async function getModule(url: string, app: JupyterFrontEnd) {
   const response = await fetch(url);
-  const js_body = await response.text();
-  load_plugin(js_body, app);
+  const jsBody = await response.text();
+  loadPlugin(jsBody, app);
 }
 
 /**
@@ -57,11 +85,13 @@ const plugin: JupyterFrontEndPlugin<void> = {
   id: '@jupyterlab/plugin-playground:plugin',
   autoStart: true,
   requires: [ISettingRegistry, ICommandPalette, IEditorTracker],
+  optional: [ILauncher],
   activate: (
     app: JupyterFrontEnd,
     settingRegistry: ISettingRegistry,
     commandPalette: ICommandPalette,
-    editorTracker: IEditorTracker
+    editorTracker: IEditorTracker,
+    launcher: ILauncher | null
   ) => {
     // In order to accommodate loading ipywidgets and other AMD modules, we
     // first put RequireJS on the page (and define the @jupyter-widgets/base
@@ -71,13 +101,16 @@ const plugin: JupyterFrontEndPlugin<void> = {
     script.type = 'text/javascript';
     script.async = true;
     script.onload = () => {
-      // Define the widgets base module for RequireJS
-      (window as any).define('@jupyter-widgets/base', [], () => base);
+      // Define the widgets base module for RequireJS - left for compatibility only
+      (window as any).define(
+        '@jupyter-widgets/base',
+        [],
+        () => modules['@jupyter-widgets/base']
+      );
 
-      const commandID =
-        '@jupyterlab/plugin-playground:LoadCurrentFileAsExtension';
-      app.commands.addCommand(commandID, {
+      app.commands.addCommand(CommandIDs.loadCurrentAsExtension, {
         label: 'Load Current File As Extension',
+        icon: extensionIcon,
         isEnabled: () =>
           editorTracker.currentWidget !== null &&
           editorTracker.currentWidget === app.shell.currentWidget,
@@ -85,26 +118,62 @@ const plugin: JupyterFrontEndPlugin<void> = {
           if (editorTracker.currentWidget) {
             const currentText =
               editorTracker.currentWidget.context.model.toString();
-            load_plugin(currentText, app);
+            loadPlugin(currentText, app);
           }
         }
       });
 
       commandPalette.addItem({
-        command: commandID,
+        command: CommandIDs.loadCurrentAsExtension,
         category: 'Plugin Playground',
         args: {}
       });
 
+      app.commands.addCommand(CommandIDs.createNewFile, {
+        label: 'TypeScript File (Playground)',
+        caption: 'Create a new TypeScript file',
+        icon: extensionIcon,
+        execute: async args => {
+          const model = await app.commands.execute('docmanager:new-untitled', {
+            path: args['cwd'],
+            type: 'file',
+            ext: 'ts'
+          });
+          const widget: IDocumentWidget<FileEditor> | undefined =
+            await app.commands.execute('docmanager:open', {
+              path: model.path,
+              factory: 'Editor'
+            });
+          if (widget) {
+            widget.content.ready.then(() => {
+              widget.content.model.value.text = PLUGIN_TEMPLATE;
+            });
+          }
+          return widget;
+        }
+      });
+
+      // add to the launcher
+      if (launcher) {
+        launcher.add({
+          command: CommandIDs.createNewFile,
+          category: 'Other',
+          rank: 1
+        });
+      }
+
       app.restored.then(async () => {
         const settings = await settingRegistry.load(plugin.id);
+        (window as any).require.config({
+          baseUrl: settings.composite.packageRegistryBaseUrl
+        });
         const urls = settings.composite.urls as string[];
         for (const u of urls) {
-          await get_module(u, app);
+          await getModule(u, app);
         }
         const plugins = settings.composite.plugins as string[];
         for (const t of plugins) {
-          await load_plugin(t, app);
+          await loadPlugin(t, app);
         }
       });
     };

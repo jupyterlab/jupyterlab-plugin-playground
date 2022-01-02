@@ -1,7 +1,7 @@
 {
   "name": "@jupyterlab/plugin-playground",
   "version": "0.3.0",
-  "description": "A JupyterLab extension.",
+  "description": "A JupyterLab Plugin Playground.",
   "keywords": [
     "jupyter",
     "jupyterlab",
@@ -37,6 +37,8 @@
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
     "clean:labextension": "rimraf jupyterlab_plugin_playground/labextension",
     "clean:all": "jlpm run clean:lib && jlpm run clean:labextension",
+    "prettier": "prettier --list-different --write \"**/*{.ts,.tsx,.css,.json}\"",
+    "lint": "jlpm prettier && jlpm eslint",
     "eslint": "eslint . --ext .ts,.tsx --fix",
     "eslint:check": "eslint . --ext .ts,.tsx",
     "install:extension": "jlpm run build",
@@ -45,19 +47,21 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
+    "@jupyter-widgets/base": "^4.0.0",
     "@jupyterlab/application": "^3.0.0",
     "@jupyterlab/apputils": "^3.0.0",
     "@jupyterlab/fileeditor": "^3.0.0",
     "@jupyterlab/settingregistry": "^3.0.0",
-    "@jupyter-widgets/base": "^4.0.0"
+    "typescript": "~4.1.3"
   },
   "devDependencies": {
     "@jupyterlab/builder": "^3.0.0",
+    "@jupyterlab/launcher": "^3.2.5",
     "@typescript-eslint/eslint-plugin": "^4.8.1",
     "@typescript-eslint/parser": "^4.8.1",
     "eslint": "^7.14.0",
     "eslint-config-prettier": "^6.15.0",
-    "eslint-plugin-prettier": "^3.1.4", 
+    "eslint-plugin-prettier": "^3.1.4",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.1.1",
     "rimraf": "^3.0.2",
@@ -68,7 +72,8 @@
     "style/index.js"
   ],
   "styleModule": "style/index.js",
-  "jupyterlab": { 
+  "jupyterlab": {
+    "webpackConfig": "./webpack.config.js",
     "extension": true,
     "outputDir": "jupyterlab_plugin_playground/labextension",
     "schemaDir": "schema"
