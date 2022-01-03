@@ -9,7 +9,7 @@ export namespace PluginTranspiler {
     compilerOptions: ts.CompilerOptions & { target: ts.ScriptTarget };
   }
   /**
-   * Internal representation of import statments.
+   * Representation of a single imported value.
    */
   export interface IImportStatement {
     name: string;
@@ -111,7 +111,7 @@ export class PluginTranspiler {
   /**
    * Instead of manually creating the nodes we create the AST from string
    * pretending it is a source file (which might be less performant,
-   * but better easier to maintain).
+   * but easier to maintain).
    */
   private _nodesFromString(code: string): ts.Node[] {
     // new lines make reading the code easier when debugging plugins
@@ -126,7 +126,6 @@ export class PluginTranspiler {
   private _createImportFunctionCall(
     data: PluginTranspiler.IImportStatement
   ): ts.Node[] {
-    // TODO: raise if not a valide name:
     const name = data.alias ? data.alias : data.name;
     const dataJSON = JSON.stringify(data);
     return this._nodesFromString(`
