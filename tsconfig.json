@@ -18,7 +18,7 @@
     "strict": true,
     "strictNullChecks": true,
     "target": "es2017",
-    "types": ["requirejs"]
+    "types": []
   },
   "include": ["src/*"]
 }

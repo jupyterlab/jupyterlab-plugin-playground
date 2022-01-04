@@ -6,9 +6,7 @@ import { formatImportError } from './errors';
 
 import { Token } from '@lumino/coreutils';
 
-export function getRequireJS(): Require {
-  return (window as any).require;
-}
+import { IRequireJS } from './requirejs';
 
 function handleImportError(
   error: Error,
@@ -24,6 +22,7 @@ export namespace ImportResolver {
   export interface IOptions {
     modules: Record<string, any>;
     tokenMap: Map<string, Token<any>>;
+    requirejs: IRequireJS;
   }
 }
 
@@ -79,7 +78,7 @@ export class ImportResolver {
         return resolve(module[data.name]);
       }
 
-      const require = getRequireJS();
+      const require = this._options.requirejs.require;
       try {
         require([data.module], (mod: any) => {
           if (data.unpack) {
