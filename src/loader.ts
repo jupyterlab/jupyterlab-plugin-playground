@@ -37,7 +37,7 @@ export class PluginLoader {
         // no export statment
         // for compatibility with older version
         console.log(
-          'No value was returned by the transpiled plugin, falling back to simpler legacy evaluation'
+          'No default export was found in the plugin code, falling back to object-based evaluation'
         );
         functionBody = `'use strict';\nreturn (${code})`;
         transpiled = false;
