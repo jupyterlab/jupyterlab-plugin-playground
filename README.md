@@ -82,8 +82,22 @@ There are a few differences in how to write plugins in the Plugin Playground com
 
 - The playground is more understanding: you can use JavaScript-like code rather than fully typed TypeScript and it will still compile.
 - You can only load a plugin with a given id more than once, but the previous version will not be unloaded. If you make changes to your plugin, save it and refresh the JupyterLab page to be able to load it afresh again.
-- ES6 modules and other modules compiled for consumption by Webpack/Node cannot be imported. An attempt to load such modules will result in `Uncaught SyntaxError: Unexpected token 'export'`.
-- To load code from a separate package, RequireJS is used which means that the import statments need to be slightly modified to point to appropriate version or file in the package.
+- To load code from an external package, RequireJS is used  (it is hidden behind ES6-compatible import syntax) which means that the import statments need to be slightly modified to point to appropriate version or file in the package.
+  - In addition to JupyterLab and Lumino packages, only AMD modules can be imported; ES6 modules and modules compiled for consumption by Webpack/Node will not work in the current version and an attempt to load such modules will result in `Uncaught SyntaxError: Unexpected token 'export'` error.
+
+### Migrating from version 0.0.3
+
+Version 0.0.3 supported only object-based plugins and require.js based imports.
+While the object-based syntax for defining plugins remains supported, using `require` global reference is now deprecated.
+
+A future version will remove `require` object to prevent confusion between `require` from `require.js`, and native `require` syntax;
+please use `requirejs` (an alias function with the same signature) instead, or migrate to ES6-syntax plugins.
+Require.js is not available in the ES6-syntax based plugins.
+
+To migrate to the ES6-compatible syntax:
+- assign the plugin object to a variable, e.g. `const plugin = { /* plugin code without changes */ };`,
+- add `export default plugin;` line,
+- convert `require()` calls to ES6 default imports.
 
 ## Advanced Settings
 

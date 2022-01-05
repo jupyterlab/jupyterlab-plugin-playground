@@ -3,11 +3,17 @@ import { IPlugin } from '@lumino/application';
 
 import { NoDefaultExportError, PluginTranspiler } from './transpiler';
 
+import { IRequireJS } from './requirejs';
+
 export namespace PluginLoader {
   export interface IOptions {
     transpiler: PluginTranspiler;
     importFunction(statement: PluginTranspiler.IImportStatement): any;
     tokenMap: Map<string, Token<any>>;
+    /**
+     * For backward-compatibility with plugins using requirejs over `import`;
+     */
+    requirejs: IRequireJS;
   }
   export interface IResult {
     plugin: IPlugin<any, any>;
@@ -55,7 +61,12 @@ export class PluginLoader {
           functionBody
         )(this._options.importFunction);
       } else {
-        plugin = new Function(functionBody)();
+        const requirejs = this._options.requirejs;
+        plugin = new Function('require', 'requirejs', 'define', functionBody)(
+          requirejs.require,
+          requirejs.require,
+          requirejs.define
+        );
       }
     } catch (e) {
       throw new PluginLoadingError(e, { code: functionBody, transpiled });

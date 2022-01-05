@@ -45,7 +45,7 @@ async function loadInIsolated(source: string): Promise<IRequireJS> {
 const NOT_LOADED_ERROR =
   'requirejs is not loaded; load it with `await requirejs.load()`';
 
-export class RequireJS {
+export class RequireJS implements IRequireJS {
   private _requirejs: IRequireJS | null = null;
 
   async load(): Promise<void> {

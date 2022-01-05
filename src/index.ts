@@ -173,7 +173,8 @@ class PluginPlayground {
         }
       }),
       importFunction: importResolver.resolve.bind(importResolver),
-      tokenMap: tokenMap
+      tokenMap: tokenMap,
+      requirejs: this.requirejs
     });
     let result;
     try {
