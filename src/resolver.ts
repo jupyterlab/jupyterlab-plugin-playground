@@ -63,6 +63,9 @@ export class ImportResolver {
         Object.prototype.hasOwnProperty.call(this._options.modules, data.module)
       ) {
         const module = this._options.modules[data.module];
+        if (data.isDefault) {
+            return module;
+        }
         if (!Object.prototype.hasOwnProperty.call(module, data.name)) {
           if (!data.isTypeOnly) {
             const equivalentTypeImport = formatImport({
