@@ -18,7 +18,7 @@
         "type": "string"
       }
     },
-    "launcher": {
+    "showIconInLauncher": {
       "title": "Show icon in launcher",
       "description": "Whether to show the Plugin Playground icon in the lanucher.",
       "default": true,

@@ -128,7 +128,7 @@ class PluginPlayground {
         baseUrl: baseURL
       });
       // add to the launcher
-      if (launcher && (settings.composite.launcherIcon as boolean)) {
+      if (launcher && (settings.composite.showIconInLauncher as boolean)) {
         launcher.add({
           command: CommandIDs.createNewFile,
           category: 'Other',
