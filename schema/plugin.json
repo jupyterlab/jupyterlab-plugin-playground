@@ -1,5 +1,7 @@
 {
   "title": "Plugin Playground",
+  "jupyter.lab.setting-icon": "ui-components:extension",
+  "jupyter.lab.setting-icon-label": "Plugin Playground",
   "properties": {
     "packageRegistryBaseUrl": {
       "title": "Base URL of a CDN for requirejs",
@@ -16,6 +18,12 @@
         "type": "string"
       }
     },
+    "launcher": {
+      "title": "Show icon in launcher",
+      "description": "Whether to show the Plugin Playground icon in the lanucher.",
+      "default": true,
+      "type": "boolean"
+    },
     "plugins": {
       "title": "Plugins",
       "description": "List of strings of plugin text to load automatically. Line breaks are encoded as '\\n'",
@@ -26,7 +34,7 @@
       }
     },
     "toolbar": {
-      "title": "Toolbar items",
+      "title": "Toolbar items (for JupyterLab 3.3+)",
       "items": {
         "$ref": "#/definitions/toolbarItem"
       },
@@ -47,7 +55,7 @@
   "jupyter.lab.shortcuts": [
     {
       "command": "plugin-playground:load-as-extension",
-      "keys": ["Alt C"],
+      "keys": ["Ctrl Alt C"],
       "selector": ".jp-Editor"
     }
   ],

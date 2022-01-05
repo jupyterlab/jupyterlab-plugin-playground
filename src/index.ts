@@ -121,21 +121,20 @@ class PluginPlayground {
       }
     });
 
-    // add to the launcher
-    if (launcher) {
-      launcher.add({
-        command: CommandIDs.createNewFile,
-        category: 'Other',
-        rank: 1
-      });
-    }
-
     app.restored.then(async () => {
       const settings = await settingRegistry.load(plugin.id);
       const baseURL = settings.composite.packageRegistryBaseUrl as string;
       requirejs.require.config({
         baseUrl: baseURL
       });
+      // add to the launcher
+      if (launcher && (settings.composite.launcherIcon as boolean)) {
+        launcher.add({
+          command: CommandIDs.createNewFile,
+          category: 'Other',
+          rank: 1
+        });
+      }
       const urls = settings.composite.urls as string[];
       for (const u of urls) {
         await this._getModule(u);

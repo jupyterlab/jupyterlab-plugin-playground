@@ -64,7 +64,7 @@ export class ImportResolver {
       ) {
         const module = this._options.modules[data.module];
         if (data.isDefault) {
-            return module;
+          return module;
         }
         if (!Object.prototype.hasOwnProperty.call(module, data.name)) {
           if (!data.isTypeOnly) {
