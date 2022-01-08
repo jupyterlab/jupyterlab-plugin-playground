@@ -143,7 +143,7 @@ export class ImportResolver {
         if (newPolicy === 'abort-to-investigate') {
           throw new Error('User aborted execution when asked about CDN policy');
         } else {
-          this._options.settings.set('allowCDN', newPolicy);
+          await this._options.settings.set('allowCDN', newPolicy);
         }
         return await this._getCDNConsent(data, cdnUrl);
       }
