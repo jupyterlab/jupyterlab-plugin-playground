@@ -31,7 +31,9 @@ import { formatErrorWithResult } from './errors';
 
 import { ImportResolver } from './resolver';
 
-import { IRequireJS, RequireJS } from './requirejs';
+import { IRequireJS, RequireJSLoader } from './requirejs';
+
+import { IModule } from './types';
 
 namespace CommandIDs {
   export const createNewFile = 'plugin-playground:create-new-plugin';
@@ -63,10 +65,10 @@ export default plugin;
 class PluginPlayground {
   constructor(
     protected app: JupyterFrontEnd,
-    settingRegistry: ISettingRegistry,
     commandPalette: ICommandPalette,
     editorTracker: IEditorTracker,
     launcher: ILauncher | null,
+    protected settings: ISettingRegistry.ISettings,
     protected requirejs: IRequireJS
   ) {
     // Define the widgets base module for RequireJS (left for compatibility only)
@@ -122,11 +124,8 @@ class PluginPlayground {
     });
 
     app.restored.then(async () => {
-      const settings = await settingRegistry.load(plugin.id);
-      const baseURL = settings.composite.packageRegistryBaseUrl as string;
-      requirejs.require.config({
-        baseUrl: baseURL
-      });
+      const settings = this.settings;
+      this._updateSettings(requirejs, settings);
       // add to the launcher
       if (launcher && (settings.composite.showIconInLauncher as boolean)) {
         launcher.add({
@@ -135,6 +134,7 @@ class PluginPlayground {
           rank: 1
         });
       }
+
       const urls = settings.composite.urls as string[];
       for (const u of urls) {
         await this._getModule(u);
@@ -142,6 +142,31 @@ class PluginPlayground {
       const plugins = settings.composite.plugins as string[];
       for (const t of plugins) {
         await this._loadPlugin(t);
+      }
+
+      settings.changed.connect(updatedSettings => {
+        this._updateSettings(requirejs, updatedSettings);
+      });
+    });
+  }
+
+  private _updateSettings(
+    requirejs: IRequireJS,
+    settings: ISettingRegistry.ISettings
+  ) {
+    const baseURL = settings.composite.requirejsCDN as string;
+    requirejs.require.config({
+      baseUrl: baseURL,
+      onNodeCreated: function (node, config, module, path) {
+        const trustedPackages = settings.composite
+          .trustedCDNPackages as any as Record<string, string>;
+        // does not get executed, huh?
+        console.log(module);
+        const integrity = trustedPackages[module];
+        if (integrity) {
+          node.setAttribute('integrity', integrity);
+          node.setAttribute('crossorigin', 'anonymous');
+        }
       }
     });
   }
@@ -159,9 +184,10 @@ class PluginPlayground {
       tokenMap.get('jupyter.extensions.jupyterWidgetRegistry')
     );
     const importResolver = new ImportResolver({
-      modules: modules,
+      modules: modules as unknown as Record<string, IModule>,
       tokenMap: tokenMap,
-      requirejs: this.requirejs
+      requirejs: this.requirejs,
+      settings: this.settings
     });
 
     const pluginLoader = new PluginLoader({
@@ -235,20 +261,22 @@ const plugin: JupyterFrontEndPlugin<void> = {
     // In order to accommodate loading ipywidgets and other AMD modules, we
     // load RequireJS before loading any custom extensions.
 
-    const requirejs = new RequireJS();
+    const requirejsLoader = new RequireJSLoader();
     // We coud convert to `async` and use `await` but we don't, because a failure
     // would freeze JupyterLab on splash screen; this way if it fails to load,
     // only the plugin is affected, not the entire application.
-    requirejs.load().then(() => {
-      new PluginPlayground(
-        app,
-        settingRegistry,
-        commandPalette,
-        editorTracker,
-        launcher,
-        requirejs
-      );
-    });
+    Promise.all([settingRegistry.load(plugin.id), requirejsLoader.load()]).then(
+      ([settings, requirejs]) => {
+        new PluginPlayground(
+          app,
+          commandPalette,
+          editorTracker,
+          launcher,
+          settings,
+          requirejs
+        );
+      }
+    );
   }
 };
 

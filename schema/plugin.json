@@ -3,7 +3,25 @@
   "jupyter.lab.setting-icon": "ui-components:extension",
   "jupyter.lab.setting-icon-label": "Plugin Playground",
   "properties": {
-    "packageRegistryBaseUrl": {
+    "allowCDN": {
+      "title": "Allow execution from CDN?",
+      "description": "Whether to allow execution of modules directly from CDN. Setting to `always` is insecure.",
+      "type": "string",
+      "enum": [
+        "awaiting-decision",
+        "always-insecure",
+        "never",
+        "only-trusted-packages"
+      ],
+      "default": "awaiting-decision"
+    },
+    "trustedCDNPackages": {
+      "title": "Trusted CDN packages",
+      "description": "When `allowCDN` is set to `only-trusted-packages`, you can provide a list of packages which are allowed to load, mapped to their `integrity` hashcode (for sub-resource integrity validation). For example:\n\n{'bqplot@0.5.32/lib/index.min.js': 'sha384-3PzjY/W0RzwwNNzUX7xM9Yg0AMgf7lNIV9vccrG++xQd7ZniA8z26dhjQa84Whdh'}\n].",
+      "type": "object",
+      "default": {}
+    },
+    "requirejsCDN": {
       "title": "Base URL of a CDN for requirejs",
       "description": "URL from which the unknown packages should be loaded, e.g. https://unpkg.com/",
       "default": "https://cdn.jsdelivr.net/npm/",

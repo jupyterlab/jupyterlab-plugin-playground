@@ -9,7 +9,7 @@ export interface IRequireJS {
 /**
  * Load requirejs in an iframe to avoid polution of `window` object.
  */
-async function loadInIsolated(source: string): Promise<IRequireJS> {
+export async function loadInIsolated(source: string): Promise<IRequireJS> {
   return new Promise((resolve, reject) => {
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';
@@ -42,27 +42,8 @@ async function loadInIsolated(source: string): Promise<IRequireJS> {
   });
 }
 
-const NOT_LOADED_ERROR =
-  'requirejs is not loaded; load it with `await requirejs.load()`';
-
-export class RequireJS implements IRequireJS {
-  private _requirejs: IRequireJS | null = null;
-
-  async load(): Promise<void> {
-    this._requirejs = await loadInIsolated(requireJsSource);
-    return;
-  }
-
-  get require(): Require {
-    if (!this._requirejs) {
-      throw new Error(NOT_LOADED_ERROR);
-    }
-    return this._requirejs.require;
-  }
-  get define(): RequireDefine {
-    if (!this._requirejs) {
-      throw new Error(NOT_LOADED_ERROR);
-    }
-    return this._requirejs.define;
+export class RequireJSLoader {
+  async load(): Promise<IRequireJS> {
+    return await loadInIsolated(requireJsSource);
   }
 }

@@ -5,10 +5,14 @@ import { NoDefaultExportError, PluginTranspiler } from './transpiler';
 
 import { IRequireJS } from './requirejs';
 
+import { IModule, IModuleMember } from './types';
+
 export namespace PluginLoader {
   export interface IOptions {
     transpiler: PluginTranspiler;
-    importFunction(statement: PluginTranspiler.IImportStatement): any;
+    importFunction(
+      statement: PluginTranspiler.IImportStatement
+    ): Promise<Token<any> | IModule | IModuleMember>;
     tokenMap: Map<string, Token<any>>;
     /**
      * For backward-compatibility with plugins using requirejs over `import`;
