@@ -156,18 +156,7 @@ class PluginPlayground {
   ) {
     const baseURL = settings.composite.requirejsCDN as string;
     requirejs.require.config({
-      baseUrl: baseURL,
-      onNodeCreated: function (node, config, module, path) {
-        const trustedPackages = settings.composite
-          .trustedCDNPackages as any as Record<string, string>;
-        // does not get executed, huh?
-        console.log(module);
-        const integrity = trustedPackages[module];
-        if (integrity) {
-          node.setAttribute('integrity', integrity);
-          node.setAttribute('crossorigin', 'anonymous');
-        }
-      }
+      baseUrl: baseURL
     });
   }
 

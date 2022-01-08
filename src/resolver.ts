@@ -1,4 +1,4 @@
-import { Dialog, showDialog, InputDialog } from '@jupyterlab/apputils';
+import { Dialog, showDialog } from '@jupyterlab/apputils';
 
 import { PluginTranspiler } from './transpiler';
 
@@ -49,26 +49,7 @@ function formatImport(data: PluginTranspiler.IImportStatement): string {
   return tokens.join(' ');
 }
 
-type CDNPolicy =
-  | 'awaiting-decision'
-  | 'always-insecure'
-  | 'never'
-  | 'only-trusted-packages';
-
-async function askUserForIntegrity(
-  module: string,
-  baseURL: string
-): Promise<string | null> {
-  return (
-    await InputDialog.getText({
-      title: `Please provide SRI string for ${module}`,
-      label: `Current CDN policy requires a sub-resource integrity value to run ${module} from ${baseURL}${module}.
-        Please provide a value with 'sha256', 'sha384', or 'sha512' prefix. 
-        `,
-      placeholder: 'sha384-'
-    })
-  ).value;
-}
+type CDNPolicy = 'awaiting-decision' | 'always-insecure' | 'never';
 
 async function askUserForCDNPolicy(
   exampleModule: string,
@@ -80,9 +61,6 @@ async function askUserForCDNPolicy(
     buttons: [
       Dialog.okButton({
         label: 'Forbid'
-      }),
-      Dialog.okButton({
-        label: 'Require SRI'
       }),
       Dialog.cancelButton({
         label: 'Abort'
@@ -96,8 +74,6 @@ async function askUserForCDNPolicy(
   switch (decision.button.label) {
     case 'Forbid':
       return 'never';
-    case 'Require SRI':
-      return 'only-trusted-packages';
     case 'Allow':
       return 'always-insecure';
     case 'Abort':
@@ -161,8 +137,6 @@ export class ImportResolver {
     cdnUrl: string
   ): Promise<ICDNConsent> {
     const allowCDN = this._options.settings.composite.allowCDN as CDNPolicy;
-    const trustedPackages = this._options.settings.composite
-      .trustedCDNPackages as any as Record<string, string>;
     switch (allowCDN) {
       case 'awaiting-decision': {
         const newPolicy = await askUserForCDNPolicy(data.module, cdnUrl);
@@ -180,22 +154,6 @@ export class ImportResolver {
           'as it is not a known token/module and the CDN policy is set to `never`'
         );
         return { agreed: false };
-      case 'only-trusted-packages': {
-        let wasIntegrityDefined = Object.prototype.hasOwnProperty.call(
-          trustedPackages,
-          data.module
-        );
-        if (!wasIntegrityDefined) {
-          const sri = await askUserForIntegrity(data.module, cdnUrl);
-          if (sri) {
-            trustedPackages[data.module] = sri;
-            this._options.settings.set('trustedCDNPackages', trustedPackages);
-            wasIntegrityDefined = true;
-          }
-          console.log(wasIntegrityDefined);
-        }
-        return { agreed: wasIntegrityDefined };
-      }
       case 'always-insecure':
         return { agreed: true };
     }

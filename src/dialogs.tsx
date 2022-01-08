@@ -20,7 +20,7 @@ export function formatCDNConsentDialog(
         </li>
         <li>
           you verified the integrity of the package by defining a cryptographic
-          hash for verification via SRI feature
+          hash for verification via SRI feature [support to be implemented]
         </li>
       </ul>
       <p>
