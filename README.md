@@ -60,7 +60,7 @@ As another more advanced example, we load the [bqplot](https://bqplot.readthedoc
 import { IJupyterWidgetRegistry } from '@jupyter-widgets/base';
 // Use RequireJS to load the AMD module. '@*' selects the latest version
 // and `/dist/index.js` loads the corresponding module containing bqplot
-// from the CDN configured in Settings (`packageRegistryBaseUrl`).
+// from the CDN configured in Settings (`requirejsCDN`).
 import bqplot from "bqplot@*/dist/index";
 
 const plugin = {
@@ -104,7 +104,6 @@ To migrate to the ES6-compatible syntax:
 
 The Advanced Settings for the Plugin Playground enable you to configure plugins to load every time JupyterLab starts up. Automatically loaded plugins can be configured in two ways:
 
-- `packageRegistryBaseUrl` is the URL for a CDN to be used by the requirejs to load external packages.
 - `urls` is a list of URLs that will be fetched and loaded as plugins automatically when JupyterLab starts up. For example, you can point to a GitHub gist or a file you host on a local server that serves text files like the above examples.
 - `plugins` is a list of strings of plugin text, like the examples above, that are loaded automatically when JupyterLab starts up. Since JSON strings cannot have multiple lines, you will need to encode any newlines in your plugin text directly as `\n\` (the second backslash is to allow the string to continue on the next line). For example, here is a user setting to encode a small plugin to run at startup:
   ```json5
