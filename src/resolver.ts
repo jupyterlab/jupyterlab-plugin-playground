@@ -10,7 +10,7 @@ import { IRequireJS } from './requirejs';
 
 import { IModule, IModuleMember } from './types';
 
-import { ServiceManager } from '@jupyterlab/services';
+import { ServiceManager, Contents } from '@jupyterlab/services';
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
@@ -215,10 +215,28 @@ export class ImportResolver {
         `Cannot resolve import of local module ${module}: the base path was not provided`
       );
     }
-    const file = await serviceManager.contents.get(
-      PathExt.join(PathExt.dirname(path), module + '.ts')
-    );
+    const base = PathExt.dirname(path);
+    const directory = await serviceManager.contents.get(base);
+    const files = directory.content as Contents.IModel[];
+    const filePaths = new Set(files.map(file => file.path));
+    const candidatePaths = [
+      PathExt.join(base, module + '.ts'),
+      PathExt.join(base, module + '.tsx')
+    ];
 
-    return await this._options.dynamicLoader(file.content);
+    for (const candidatePath of candidatePaths) {
+      if (filePaths.has(candidatePath)) {
+        console.log(`Resolved ${module} to ${candidatePath}`);
+        const file = await serviceManager.contents.get(candidatePath);
+        return await this._options.dynamicLoader(file.content);
+      }
+    }
+    console.warn(
+      `Could not resolve ${module}, candidate paths:`,
+      candidatePaths,
+      'actual paths:',
+      filePaths
+    );
+    return null;
   }
 }

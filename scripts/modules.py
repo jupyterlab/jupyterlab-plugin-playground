@@ -13,6 +13,7 @@ def to_identifier(package_name: str):
 
 # packages not used in core, but required for examples
 EXTRA_MODULES = {
+    '@jupyterlab/docregistry',
     '@jupyterlab/outputarea',
     '@jupyter-widgets/base',
     '@lumino/datagrid'

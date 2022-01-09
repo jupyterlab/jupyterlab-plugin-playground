@@ -68,7 +68,7 @@ export class PluginTranspiler {
         return ts.factory.updateSourceFile(source, [
           ...pinnedStatements,
           ts.factory.createVariableStatement(
-            undefined /* modifeirs */,
+            undefined /* modifiers */,
             ts.factory.createVariableDeclarationList(
               [
                 ts.factory.createVariableDeclaration(

@@ -9,6 +9,7 @@ import * as jupyterlab_coreutils from '@jupyterlab/coreutils';
 import * as jupyterlab_debugger from '@jupyterlab/debugger';
 import * as jupyterlab_docmanager from '@jupyterlab/docmanager';
 import * as jupyterlab_docprovider from '@jupyterlab/docprovider';
+import * as jupyterlab_docregistry from '@jupyterlab/docregistry';
 import * as jupyterlab_documentsearch from '@jupyterlab/documentsearch';
 import * as jupyterlab_extensionmanager from '@jupyterlab/extensionmanager';
 import * as jupyterlab_filebrowser from '@jupyterlab/filebrowser';
@@ -62,6 +63,7 @@ export const modules = {
   '@jupyterlab/debugger': jupyterlab_debugger,
   '@jupyterlab/docmanager': jupyterlab_docmanager,
   '@jupyterlab/docprovider': jupyterlab_docprovider,
+  '@jupyterlab/docregistry': jupyterlab_docregistry,
   '@jupyterlab/documentsearch': jupyterlab_documentsearch,
   '@jupyterlab/extensionmanager': jupyterlab_extensionmanager,
   '@jupyterlab/filebrowser': jupyterlab_filebrowser,

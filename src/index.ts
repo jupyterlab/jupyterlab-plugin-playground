@@ -190,7 +190,8 @@ class PluginPlayground {
     const pluginLoader = new PluginLoader({
       transpiler: new PluginTranspiler({
         compilerOptions: {
-          target: ts.ScriptTarget.ES2017
+          target: ts.ScriptTarget.ES2017,
+          jsx: ts.JsxEmit.React
         }
       }),
       importFunction: importResolver.resolve.bind(importResolver),
