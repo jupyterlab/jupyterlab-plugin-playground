@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { PluginLoader } from './loader';
-import { PluginTranspiler } from './transpiler';
 
 export function formatErrorWithResult(
   error: Error,
@@ -21,15 +20,10 @@ export function formatErrorWithResult(
   );
 }
 
-export function formatImportError(
-  error: Error,
-  data: PluginTranspiler.IImportStatement
-): JSX.Element {
+export function formatImportError(error: Error, module: string): JSX.Element {
   return (
     <div>
-      Error when importing <code>{data.name}</code> from{' '}
-      <code>{data.module}</code> (
-      {data.unpack ? 'with unpacking' : 'without unpacking'}):
+      Error when importing <code>{module}</code>:
       <pre>{error.stack ? error.stack : error.message}</pre>
     </div>
   );

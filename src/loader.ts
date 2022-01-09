@@ -15,7 +15,7 @@ export namespace PluginLoader {
   export interface IOptions {
     transpiler: PluginTranspiler;
     importFunction(
-      statement: PluginTranspiler.IImportStatement
+      statement: string
     ): Promise<Token<any> | IModule | IModuleMember>;
     tokenMap: Map<string, Token<any>>;
     /**

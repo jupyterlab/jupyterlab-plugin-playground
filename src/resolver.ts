@@ -1,7 +1,5 @@
 import { Dialog, showDialog } from '@jupyterlab/apputils';
 
-import { PluginTranspiler } from './transpiler';
-
 import { formatImportError } from './errors';
 
 import { Token } from '@lumino/coreutils';
@@ -18,12 +16,10 @@ import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { formatCDNConsentDialog } from './dialogs';
 
-type IImportStatement = PluginTranspiler.IImportStatement;
-
-function handleImportError(error: Error, data: IImportStatement) {
+function handleImportError(error: Error, module: string) {
   return showDialog({
     title: `Import in plugin code failed: ${error.message}`,
-    body: formatImportError(error, data)
+    body: formatImportError(error, module)
   });
 }
 
@@ -40,22 +36,6 @@ export namespace ImportResolver {
      */
     basePath: string | null;
   }
-}
-
-function formatImport(data: IImportStatement): string {
-  const tokens = ['import'];
-  if (data.isTypeOnly) {
-    tokens.push('type');
-  }
-  if (data.isDefault) {
-    tokens.push(`* as ${data.name}`);
-  } else {
-    const name = data.alias ? `${data.name} as ${data.alias}` : data.name;
-    tokens.push(data.unpack ? `{ ${name} }` : name);
-  }
-  tokens.push('from');
-  tokens.push(data.module);
-  return tokens.join(' ');
 }
 
 type CDNPolicy = 'awaiting-decision' | 'always-insecure' | 'never';
@@ -111,62 +91,74 @@ export class ImportResolver {
    *   - module assignment if appropriate module is available,
    *   - requirejs import if everything else fails
    */
-  async resolve(
-    data: IImportStatement
-  ): Promise<Token<any> | IModule | IModuleMember> {
+  async resolve(module: string): Promise<Token<any> | IModule | IModuleMember> {
     try {
-      const token = this._resolveToken(data);
-      if (token !== null) {
-        return token;
-      }
-      const knownModule = this._resolveKnownModule(data);
+      const tokenHandler = {
+        get: (
+          target: IModule,
+          prop: string | number | symbol,
+          receiver: any
+        ) => {
+          if (typeof prop !== 'string') {
+            return Reflect.get(target, prop, receiver);
+          }
+          const tokenName = `${module}:${prop}`;
+          if (this._options.tokenMap.has(tokenName)) {
+            // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
+            return this._options.tokenMap.get(tokenName)!;
+          }
+          return Reflect.get(target, prop, receiver);
+        }
+      };
+
+      const knownModule = this._resolveKnownModule(module);
       if (knownModule !== null) {
-        return knownModule;
+        return new Proxy(knownModule, tokenHandler);
       }
-      const localFile = await this._resolveLocalFile(data);
+      const localFile = await this._resolveLocalFile(module);
       if (localFile !== null) {
         return localFile;
       }
 
       const baseURL = this._options.settings.composite.requirejsCDN as string;
-      const consent = await this._getCDNConsent(data, baseURL);
+      const consent = await this._getCDNConsent(module, baseURL);
 
       if (!consent.agreed) {
         throw new Error(
-          `Module ${data.module} requires execution from CDN but it is not allowed.`
+          `Module ${module} requires execution from CDN but it is not allowed.`
         );
       }
 
-      const externalAMDModule = await this._resolveAMDModule(data);
+      const externalAMDModule = await this._resolveAMDModule(module);
       if (externalAMDModule !== null) {
         return externalAMDModule;
       }
-      throw new Error(`Could not resolve the module ${data.module}`);
+      throw new Error(`Could not resolve the module ${module}`);
     } catch (error) {
-      handleImportError(error as Error, data);
+      handleImportError(error as Error, module);
       throw error;
     }
   }
 
   private async _getCDNConsent(
-    data: PluginTranspiler.IImportStatement,
+    module: string,
     cdnUrl: string
   ): Promise<ICDNConsent> {
     const allowCDN = this._options.settings.composite.allowCDN as CDNPolicy;
     switch (allowCDN) {
       case 'awaiting-decision': {
-        const newPolicy = await askUserForCDNPolicy(data.module, cdnUrl);
+        const newPolicy = await askUserForCDNPolicy(module, cdnUrl);
         if (newPolicy === 'abort-to-investigate') {
           throw new Error('User aborted execution when asked about CDN policy');
         } else {
           await this._options.settings.set('allowCDN', newPolicy);
         }
-        return await this._getCDNConsent(data, cdnUrl);
+        return await this._getCDNConsent(module, cdnUrl);
       }
       case 'never':
         console.warn(
           'Not loading the module ',
-          data,
+          module,
           'as it is not a known token/module and the CDN policy is set to `never`'
         );
         return { agreed: false };
@@ -175,57 +167,24 @@ export class ImportResolver {
     }
   }
 
-  private _resolveToken(data: IImportStatement): Token<any> | null {
-    const tokenName = `${data.module}:${data.name}`;
-    if (this._options.tokenMap.has(tokenName)) {
-      // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
-      return this._options.tokenMap.get(tokenName)!;
-    }
-    return null;
-  }
-
-  private _resolveKnownModule(
-    data: IImportStatement
-  ): IModule | IModuleMember | null {
-    if (
-      Object.prototype.hasOwnProperty.call(this._options.modules, data.module)
-    ) {
-      const module = this._options.modules[data.module];
-      if (data.isDefault) {
-        return module;
-      }
-      if (!Object.prototype.hasOwnProperty.call(module, data.name)) {
-        if (!data.isTypeOnly) {
-          const equivalentTypeImport = formatImport({
-            ...data,
-            isTypeOnly: true
-          });
-          console.warn(
-            `Module ${data.module} does not have a property ${data.name}; if it is type import,` +
-              ` use \`${equivalentTypeImport}\` to avoid this warning.`
-          );
-        }
-      }
-      return module[data.name];
+  private _resolveKnownModule(module: string): IModule | null {
+    if (Object.prototype.hasOwnProperty.call(this._options.modules, module)) {
+      return this._options.modules[module];
     }
     return null;
   }
 
   private async _resolveAMDModule(
-    data: IImportStatement
+    module: string
   ): Promise<IModule | IModuleMember | null> {
     const require = this._options.requirejs.require;
     return new Promise((resolve, reject) => {
-      console.log('Fetching', data, 'via require.js');
-      require([data.module], (mod: IModule) => {
+      console.log('Fetching', module, 'via require.js');
+      require([module], (mod: IModule) => {
         if (!mod) {
-          reject('Module {data.module} could not be loaded via require.js');
+          reject(`Module ${module} could not be loaded via require.js`);
         }
-        if (data.unpack) {
-          return resolve(mod[data.name]);
-        } else {
-          return resolve(mod);
-        }
+        return resolve(mod);
       }, (error: Error) => {
         return reject(error);
       });
@@ -233,50 +192,33 @@ export class ImportResolver {
   }
 
   private async _resolveLocalFile(
-    data: IImportStatement
+    module: string
   ): Promise<IModule | IModuleMember | null> {
-    if (!data.module.startsWith('.')) {
+    if (!module.startsWith('.')) {
       // not a local file, can't help here
       return null;
     }
     const serviceManager = this._options.serviceManager;
     if (serviceManager === null) {
       throw Error(
-        `Cannot resolve import of local module ${data.module}: service manager is not available`
+        `Cannot resolve import of local module ${module}: service manager is not available`
       );
     }
     if (!this._options.dynamicLoader) {
       throw Error(
-        `Cannot resolve import of local module ${data.module}: dynamic loader is not available`
+        `Cannot resolve import of local module ${module}: dynamic loader is not available`
       );
     }
     const path = this._options.basePath;
     if (path === null) {
       throw Error(
-        `Cannot resolve import of local module ${data.module}: the base path was not provided`
+        `Cannot resolve import of local module ${module}: the base path was not provided`
       );
     }
     const file = await serviceManager.contents.get(
-      PathExt.join(PathExt.dirname(path), data.module + '.ts')
+      PathExt.join(PathExt.dirname(path), module + '.ts')
     );
 
-    const module = await this._options.dynamicLoader(file.content);
-
-    if (data.isDefault) {
-      return module.default;
-    }
-    if (!Object.prototype.hasOwnProperty.call(module, data.name)) {
-      if (!data.isTypeOnly) {
-        const equivalentTypeImport = formatImport({
-          ...data,
-          isTypeOnly: true
-        });
-        console.warn(
-          `Module ${data.module} does not have a property ${data.name}; if it is type import,` +
-            ` use \`${equivalentTypeImport}\` to avoid this warning.`
-        );
-      }
-    }
-    return module[data.name];
+    return await this._options.dynamicLoader(file.content);
   }
 }
