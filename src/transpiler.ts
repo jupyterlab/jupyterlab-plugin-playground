@@ -10,6 +10,14 @@ export namespace PluginTranspiler {
   }
 }
 
+function isUseStrict(node: ts.Node): boolean {
+  return (
+    ts.isExpressionStatement(node) &&
+    ts.isStringLiteral(node.expression) &&
+    node.expression.text === 'use strict'
+  );
+}
+
 export class PluginTranspiler {
   private _options: PluginTranspiler.IOptions;
   readonly importFunctionName = 'require';
@@ -36,11 +44,69 @@ export class PluginTranspiler {
       transformers: {
         before: requireDefaultExport
           ? [this._requireDefaultExportTransformer()]
-          : []
+          : [],
+        after: [
+          this._awaitRequireTransformer(),
+          this._exportWrapperTransformer()
+        ]
       }
     });
-    const body = result.outputText.replace(/ require\(/g, ' await require(');
-    return `'use strict';\nconst exports = {};\n${body}\nreturn exports;`;
+    return result.outputText;
+  }
+
+  private _exportWrapperTransformer(): ts.TransformerFactory<ts.SourceFile> {
+    // working on output of `createImportCallExpressionCommonJS` from TypeScript
+    return context => {
+      return source => {
+        const transpiledStatements = [...source.statements];
+        const pinnedStatements = [];
+        if (isUseStrict(transpiledStatements[0])) {
+          // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
+          const first = transpiledStatements.shift()!;
+          pinnedStatements.push(first);
+        }
+        return ts.factory.updateSourceFile(source, [
+          ...pinnedStatements,
+          ts.factory.createVariableStatement(
+            undefined /* modifeirs */,
+            ts.factory.createVariableDeclarationList(
+              [
+                ts.factory.createVariableDeclaration(
+                  ts.factory.createIdentifier('exports'),
+                  undefined /* exclamationToken */,
+                  undefined /* type */,
+                  ts.factory.createObjectLiteralExpression()
+                )
+              ],
+              ts.NodeFlags.Const
+            )
+          ),
+          // original statements
+          ...transpiledStatements,
+          // return `exports`
+          ts.factory.createReturnStatement(
+            ts.factory.createIdentifier('exports')
+          )
+        ]);
+      };
+    };
+  }
+
+  private _awaitRequireTransformer(): ts.TransformerFactory<ts.SourceFile> {
+    // working on output of `createImportCallExpressionCommonJS` from TypeScript
+    return context => {
+      const visit: ts.Visitor = node => {
+        if (ts.isCallExpression(node)) {
+          const expression = node.expression;
+          if (ts.isIdentifier(expression) && expression.text === 'require') {
+            return ts.factory.createAwaitExpression(node);
+          }
+        }
+        return ts.visitEachChild(node, child => visit(child), context);
+      };
+
+      return source => ts.visitNode(source, visit);
+    };
   }
 
   private _requireDefaultExportTransformer(): ts.TransformerFactory<ts.SourceFile> {
