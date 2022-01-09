@@ -93,7 +93,7 @@ export class ImportResolver {
    */
   async resolve(module: string): Promise<Token<any> | IModule | IModuleMember> {
     try {
-      const tokenHandler = {
+      const tokenAndDefaultHandler = {
         get: (
           target: IModule,
           prop: string | number | symbol,
@@ -107,13 +107,17 @@ export class ImportResolver {
             // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
             return this._options.tokenMap.get(tokenName)!;
           }
+          // synthetic default import (without proxy)
+          if (prop === 'default' && !(prop in target)) {
+            return target;
+          }
           return Reflect.get(target, prop, receiver);
         }
       };
 
       const knownModule = this._resolveKnownModule(module);
       if (knownModule !== null) {
-        return new Proxy(knownModule, tokenHandler);
+        return new Proxy(knownModule, tokenAndDefaultHandler);
       }
       const localFile = await this._resolveLocalFile(module);
       if (localFile !== null) {
