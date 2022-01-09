@@ -13,6 +13,8 @@ import {
   ICommandPalette
 } from '@jupyterlab/apputils';
 
+import { Signal } from '@lumino/signaling';
+
 import { IDocumentWidget } from '@jupyterlab/docregistry';
 
 import { FileEditor, IEditorTracker } from '@jupyterlab/fileeditor';
@@ -67,6 +69,7 @@ export default plugin;
 class PluginPlayground {
   constructor(
     protected app: JupyterFrontEnd,
+    protected settingRegistry: ISettingRegistry,
     commandPalette: ICommandPalette,
     editorTracker: IEditorTracker,
     launcher: ILauncher | null,
@@ -180,7 +183,7 @@ class PluginPlayground {
       tokenMap: tokenMap,
       requirejs: this.requirejs,
       settings: this.settings,
-      documentManager: this.documentManager,
+      serviceManager: this.app.serviceManager,
       basePath: path
     });
 
@@ -193,13 +196,14 @@ class PluginPlayground {
       }),
       importFunction: importResolver.resolve.bind(importResolver),
       tokenMap: tokenMap,
+      serviceManager: this.app.serviceManager,
       requirejs: this.requirejs
     });
     importResolver.dynamicLoader = pluginLoader.loadFile.bind(pluginLoader);
 
     let result;
     try {
-      result = await pluginLoader.load(code);
+      result = await pluginLoader.load(code, path);
     } catch (error) {
       if (error instanceof PluginLoadingError) {
         const internalError = error.error;
@@ -213,6 +217,26 @@ class PluginPlayground {
       return;
     }
     const plugin = result.plugin;
+
+    if (result.schema) {
+      // TODO: this is mostly fine to get the menus and toolbars, but:
+      // - transforms are not applied
+      // - any refresh from the server might overwrite the data
+      // - it is not a good long term solution in general
+      this.settingRegistry.plugins[plugin.id] = {
+        id: plugin.id,
+        schema: JSON.parse(result.schema),
+        raw: result.schema,
+        data: {
+          composite: {},
+          user: {}
+        },
+        version: '0.0.0'
+      };
+      (
+        this.settingRegistry.pluginChanged as Signal<ISettingRegistry, string>
+      ).emit(plugin.id);
+    }
 
     // Unregister plugin if already registered.
     if (this.app.hasPlugin(plugin.id)) {
@@ -266,6 +290,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
       ([settings, requirejs]) => {
         new PluginPlayground(
           app,
+          settingRegistry,
           commandPalette,
           editorTracker,
           launcher,

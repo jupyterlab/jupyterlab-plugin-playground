@@ -12,7 +12,7 @@ import { IRequireJS } from './requirejs';
 
 import { IModule, IModuleMember } from './types';
 
-import { IDocumentManager } from '@jupyterlab/docmanager';
+import { ServiceManager } from '@jupyterlab/services';
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
@@ -33,7 +33,7 @@ export namespace ImportResolver {
     tokenMap: Map<string, Token<any>>;
     requirejs: IRequireJS;
     settings: ISettingRegistry.ISettings;
-    documentManager: IDocumentManager | null;
+    serviceManager: ServiceManager | null;
     dynamicLoader?: (transpiledCode: string) => Promise<IModule>;
     /**
      * Path of the module to load, used to resolve relative imports.
@@ -216,7 +216,11 @@ export class ImportResolver {
   ): Promise<IModule | IModuleMember | null> {
     const require = this._options.requirejs.require;
     return new Promise((resolve, reject) => {
+      console.log('Fetching', data, 'via require.js');
       require([data.module], (mod: IModule) => {
+        if (!mod) {
+          reject('Module {data.module} could not be loaded via require.js');
+        }
         if (data.unpack) {
           return resolve(mod[data.name]);
         } else {
@@ -235,10 +239,10 @@ export class ImportResolver {
       // not a local file, can't help here
       return null;
     }
-    const documentManager = this._options.documentManager;
-    if (documentManager === null) {
+    const serviceManager = this._options.serviceManager;
+    if (serviceManager === null) {
       throw Error(
-        `Cannot resolve import of local module ${data.module}: document manager is not available`
+        `Cannot resolve import of local module ${data.module}: service manager is not available`
       );
     }
     if (!this._options.dynamicLoader) {
@@ -252,7 +256,7 @@ export class ImportResolver {
         `Cannot resolve import of local module ${data.module}: the base path was not provided`
       );
     }
-    const file = await documentManager.services.contents.get(
+    const file = await serviceManager.contents.get(
       PathExt.join(PathExt.dirname(path), data.module + '.ts')
     );
 

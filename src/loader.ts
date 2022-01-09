@@ -1,6 +1,10 @@
 import { Token } from '@lumino/coreutils';
 import { IPlugin } from '@lumino/application';
 
+import { PathExt } from '@jupyterlab/coreutils';
+
+import { ServiceManager } from '@jupyterlab/services';
+
 import { NoDefaultExportError, PluginTranspiler } from './transpiler';
 
 import { IRequireJS } from './requirejs';
@@ -18,11 +22,13 @@ export namespace PluginLoader {
      * For backward-compatibility with plugins using requirejs over `import`;
      */
     requirejs: IRequireJS;
+    serviceManager: ServiceManager | null;
   }
   export interface IResult {
     plugin: IPlugin<any, any>;
     code: string;
     transpiled: boolean;
+    schema?: string | null;
   }
 }
 
@@ -39,16 +45,51 @@ export class PluginLoader {
   }
 
   private async _createAsyncFunctionModule(transpiledCode: string) {
-    return await new AsyncFunction(
+    const module = new AsyncFunction(
       this._options.transpiler.importFunctionName,
       transpiledCode
-    )(this._options.importFunction);
+    );
+    return await module(this._options.importFunction);
+  }
+
+  private async _discoverSchema(
+    pluginPath: string | null
+  ): Promise<string | null> {
+    if (!pluginPath) {
+      console.warn('Not looking for schema: no path');
+      return null;
+    }
+    const serviceManager = this._options.serviceManager;
+    if (!serviceManager) {
+      console.warn('Not looking for schema: no document manager');
+      return null;
+    }
+    const candidatePaths = [
+      // canonical
+      PathExt.join(PathExt.dirname(pluginPath), '..', 'schema', 'plugin.json'),
+      // simplification for dynamic plugins
+      PathExt.join(PathExt.dirname(pluginPath), 'plugin.json')
+    ];
+    for (const path of candidatePaths) {
+      console.log(`Looking for schema in ${path}`);
+      try {
+        const file = await serviceManager.contents.get(path);
+        console.log(`Found schema in ${path}`);
+        return file.content;
+      } catch (e) {
+        console.log(`Did not find schema in ${path}`);
+      }
+    }
+    return null;
   }
 
   /**
    * Create a plugin from TypeScript code.
    */
-  async load(code: string): Promise<PluginLoader.IResult> {
+  async load(
+    code: string,
+    basePath: string | null
+  ): Promise<PluginLoader.IResult> {
     let functionBody: string;
     let plugin;
     let transpiled = true;
@@ -69,10 +110,13 @@ export class PluginLoader {
     }
 
     console.log(functionBody);
+    let schema: string | null = null;
 
     try {
       if (transpiled) {
-        plugin = (await this._createAsyncFunctionModule(functionBody)).default;
+        const module = await this._createAsyncFunctionModule(functionBody);
+        plugin = module.default;
+        schema = await this._discoverSchema(basePath);
       } else {
         const requirejs = this._options.requirejs;
         plugin = new Function('require', 'requirejs', 'define', functionBody)(
@@ -118,6 +162,7 @@ export class PluginLoader {
       })
       .filter((token): token is Token<any> => token != null);
     return {
+      schema,
       plugin,
       code: functionBody,
       transpiled
