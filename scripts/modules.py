@@ -1,3 +1,4 @@
+from jupyterlab.coreconfig import CoreConfig
 import jupyterlab
 
 
@@ -12,6 +13,7 @@ def to_identifier(package_name: str):
 
 # packages not used in core, but required for examples
 EXTRA_MODULES = {
+    '@jupyterlab/outputarea',
     '@jupyter-widgets/base',
     '@lumino/datagrid'
 }
@@ -54,7 +56,7 @@ def create_modules_map(core_modules, extra_modules, ignored_modules):
 
 if __name__ == '__main__':
     print(f'Creating module map against JupyterLab {jupyterlab.__version__}')
-    config = jupyterlab.coreconfig.CoreConfig()
+    config = CoreConfig()
     core_modules = config.singletons.keys()
     modules_map = create_modules_map(core_modules, EXTRA_MODULES, IGNORED_MODULES)
     with open('src/modules.ts', 'w') as f:

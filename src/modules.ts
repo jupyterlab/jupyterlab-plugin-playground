@@ -20,6 +20,7 @@ import * as jupyterlab_logconsole from '@jupyterlab/logconsole';
 import * as jupyterlab_mainmenu from '@jupyterlab/mainmenu';
 import * as jupyterlab_markdownviewer from '@jupyterlab/markdownviewer';
 import * as jupyterlab_notebook from '@jupyterlab/notebook';
+import * as jupyterlab_outputarea from '@jupyterlab/outputarea';
 import * as jupyterlab_rendermime from '@jupyterlab/rendermime';
 import * as jupyterlab_rendermime_interfaces from '@jupyterlab/rendermime-interfaces';
 import * as jupyterlab_services from '@jupyterlab/services';
@@ -72,6 +73,7 @@ export const modules = {
   '@jupyterlab/mainmenu': jupyterlab_mainmenu,
   '@jupyterlab/markdownviewer': jupyterlab_markdownviewer,
   '@jupyterlab/notebook': jupyterlab_notebook,
+  '@jupyterlab/outputarea': jupyterlab_outputarea,
   '@jupyterlab/rendermime': jupyterlab_rendermime,
   '@jupyterlab/rendermime-interfaces': jupyterlab_rendermime_interfaces,
   '@jupyterlab/services': jupyterlab_services,
