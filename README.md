@@ -84,7 +84,7 @@ There are a few differences in how to write plugins in the Plugin Playground com
 - You can only load a plugin with a given id more than once, but the previous version will not be unloaded. If you make changes to your plugin, save it and refresh the JupyterLab page to be able to load it afresh again.
 - To load code from an external package, RequireJS is used (it is hidden behind ES6-compatible import syntax) which means that the import statements need to be slightly modified to point to appropriate version or file in the package.
   - In addition to JupyterLab and Lumino packages, only AMD modules can be imported; ES6 modules and modules compiled for consumption by Webpack/Node will not work in the current version and an attempt to load such modules will result in `Uncaught SyntaxError: Unexpected token 'export'` error.
-- While the playground will attempt to import relative files (with `.ts` suffix) and to load `plugin.json` schema, these are experimental features for rapid prototyping and details are subject to change; other resources like styles and SVG files are not yet supported (but the support is planned)
+- While the playground will attempt to import relative files (with `.ts` suffix), SVG (as strings), and to load `plugin.json` schema, these are experimental features for rapid prototyping and details are subject to change; other resources like CSS styles are not yet supported (but the support is planned)
 
 ### Migrating from version 0.0.3
 

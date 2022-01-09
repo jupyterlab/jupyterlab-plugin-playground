@@ -216,26 +216,35 @@ export class ImportResolver {
       );
     }
     const base = PathExt.dirname(path);
-    const directory = await serviceManager.contents.get(base);
-    const files = directory.content as Contents.IModel[];
-    const filePaths = new Set(files.map(file => file.path));
     const candidatePaths = [
       PathExt.join(base, module + '.ts'),
       PathExt.join(base, module + '.tsx')
     ];
+    if (module.endsWith('.svg')) {
+      candidatePaths.push(PathExt.join(base, module));
+    }
 
     for (const candidatePath of candidatePaths) {
+      const directory = await serviceManager.contents.get(
+        PathExt.dirname(candidatePath)
+      );
+      const files = directory.content as Contents.IModel[];
+      const filePaths = new Set(files.map(file => file.path));
+
       if (filePaths.has(candidatePath)) {
         console.log(`Resolved ${module} to ${candidatePath}`);
         const file = await serviceManager.contents.get(candidatePath);
+        if (candidatePath.endsWith('.svg')) {
+          return {
+            default: file.content
+          };
+        }
         return await this._options.dynamicLoader(file.content);
       }
     }
     console.warn(
       `Could not resolve ${module}, candidate paths:`,
-      candidatePaths,
-      'actual paths:',
-      filePaths
+      candidatePaths
     );
     return null;
   }
