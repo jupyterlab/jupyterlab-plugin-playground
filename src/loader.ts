@@ -33,6 +33,18 @@ export class PluginLoader {
     this._options = options;
   }
 
+  async loadFile(code: string): Promise<IModule> {
+    const functionBody = this._options.transpiler.transpile(code, false);
+    return await this._createAsyncFunctionModule(functionBody);
+  }
+
+  private async _createAsyncFunctionModule(transpiledCode: string) {
+    return await new AsyncFunction(
+      this._options.transpiler.importFunctionName,
+      transpiledCode
+    )(this._options.importFunction);
+  }
+
   /**
    * Create a plugin from TypeScript code.
    */
@@ -41,7 +53,7 @@ export class PluginLoader {
     let plugin;
     let transpiled = true;
     try {
-      functionBody = this._options.transpiler.transpile(code);
+      functionBody = this._options.transpiler.transpile(code, true);
     } catch (error) {
       if (error instanceof NoDefaultExportError) {
         // no export statment
@@ -60,10 +72,7 @@ export class PluginLoader {
 
     try {
       if (transpiled) {
-        plugin = await new AsyncFunction(
-          this._options.transpiler.importFunctionName,
-          functionBody
-        )(this._options.importFunction);
+        plugin = (await this._createAsyncFunctionModule(functionBody)).default;
       } else {
         const requirejs = this._options.requirejs;
         plugin = new Function('require', 'requirejs', 'define', functionBody)(

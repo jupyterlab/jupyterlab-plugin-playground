@@ -21,6 +21,8 @@ import { ILauncher } from '@jupyterlab/launcher';
 
 import { extensionIcon } from '@jupyterlab/ui-components';
 
+import { IDocumentManager } from '@jupyterlab/docmanager';
+
 import { PluginLoader, PluginLoadingError } from './loader';
 
 import { PluginTranspiler } from './transpiler';
@@ -68,6 +70,7 @@ class PluginPlayground {
     commandPalette: ICommandPalette,
     editorTracker: IEditorTracker,
     launcher: ILauncher | null,
+    protected documentManager: IDocumentManager | null,
     protected settings: ISettingRegistry.ISettings,
     protected requirejs: IRequireJS
   ) {
@@ -85,10 +88,10 @@ class PluginPlayground {
         editorTracker.currentWidget !== null &&
         editorTracker.currentWidget === app.shell.currentWidget,
       execute: async () => {
-        if (editorTracker.currentWidget) {
-          const currentText =
-            editorTracker.currentWidget.context.model.toString();
-          this._loadPlugin(currentText);
+        const currentWidget = editorTracker.currentWidget;
+        if (currentWidget) {
+          const currentText = currentWidget.context.model.toString();
+          this._loadPlugin(currentText, currentWidget.context.path);
         }
       }
     });
@@ -141,7 +144,7 @@ class PluginPlayground {
       }
       const plugins = settings.composite.plugins as string[];
       for (const t of plugins) {
-        await this._loadPlugin(t);
+        await this._loadPlugin(t, null);
       }
 
       settings.changed.connect(updatedSettings => {
@@ -160,7 +163,7 @@ class PluginPlayground {
     });
   }
 
-  private async _loadPlugin(code: string) {
+  private async _loadPlugin(code: string, path: string | null) {
     const tokenMap = new Map(
       Array.from((this.app as any)._serviceMap.keys()).map((t: any) => [
         t.name,
@@ -176,7 +179,9 @@ class PluginPlayground {
       modules: modules as unknown as Record<string, IModule>,
       tokenMap: tokenMap,
       requirejs: this.requirejs,
-      settings: this.settings
+      settings: this.settings,
+      documentManager: this.documentManager,
+      basePath: path
     });
 
     const pluginLoader = new PluginLoader({
@@ -190,6 +195,8 @@ class PluginPlayground {
       tokenMap: tokenMap,
       requirejs: this.requirejs
     });
+    importResolver.dynamicLoader = pluginLoader.loadFile.bind(pluginLoader);
+
     let result;
     try {
       result = await pluginLoader.load(code);
@@ -228,7 +235,7 @@ class PluginPlayground {
   private async _getModule(url: string) {
     const response = await fetch(url);
     const jsBody = await response.text();
-    this._loadPlugin(jsBody);
+    this._loadPlugin(jsBody, null);
   }
 }
 
@@ -239,13 +246,14 @@ const plugin: JupyterFrontEndPlugin<void> = {
   id: '@jupyterlab/plugin-playground:plugin',
   autoStart: true,
   requires: [ISettingRegistry, ICommandPalette, IEditorTracker],
-  optional: [ILauncher],
+  optional: [ILauncher, IDocumentManager],
   activate: (
     app: JupyterFrontEnd,
     settingRegistry: ISettingRegistry,
     commandPalette: ICommandPalette,
     editorTracker: IEditorTracker,
-    launcher: ILauncher | null
+    launcher: ILauncher | null,
+    documentManager: IDocumentManager | null
   ) => {
     // In order to accommodate loading ipywidgets and other AMD modules, we
     // load RequireJS before loading any custom extensions.
@@ -261,6 +269,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
           commandPalette,
           editorTracker,
           launcher,
+          documentManager,
           settings,
           requirejs
         );

@@ -6,18 +6,21 @@ import { formatImportError } from './errors';
 
 import { Token } from '@lumino/coreutils';
 
+import { PathExt } from '@jupyterlab/coreutils';
+
 import { IRequireJS } from './requirejs';
 
 import { IModule, IModuleMember } from './types';
+
+import { IDocumentManager } from '@jupyterlab/docmanager';
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { formatCDNConsentDialog } from './dialogs';
 
-function handleImportError(
-  error: Error,
-  data: PluginTranspiler.IImportStatement
-) {
+type IImportStatement = PluginTranspiler.IImportStatement;
+
+function handleImportError(error: Error, data: IImportStatement) {
   return showDialog({
     title: `Import in plugin code failed: ${error.message}`,
     body: formatImportError(error, data)
@@ -30,10 +33,16 @@ export namespace ImportResolver {
     tokenMap: Map<string, Token<any>>;
     requirejs: IRequireJS;
     settings: ISettingRegistry.ISettings;
+    documentManager: IDocumentManager | null;
+    dynamicLoader?: (transpiledCode: string) => Promise<IModule>;
+    /**
+     * Path of the module to load, used to resolve relative imports.
+     */
+    basePath: string | null;
   }
 }
 
-function formatImport(data: PluginTranspiler.IImportStatement): string {
+function formatImport(data: IImportStatement): string {
   const tokens = ['import'];
   if (data.isTypeOnly) {
     tokens.push('type');
@@ -87,12 +96,15 @@ interface ICDNConsent {
   readonly agreed: boolean;
 }
 
-// class RemoteImportResolver
-
 export class ImportResolver {
   constructor(private _options: ImportResolver.IOptions) {
     // no-op
   }
+
+  set dynamicLoader(loader: (transpiledCode: string) => Promise<IModule>) {
+    this._options.dynamicLoader = loader;
+  }
+
   /**
    * Convert import to:
    *   - token string,
@@ -100,7 +112,7 @@ export class ImportResolver {
    *   - requirejs import if everything else fails
    */
   async resolve(
-    data: PluginTranspiler.IImportStatement
+    data: IImportStatement
   ): Promise<Token<any> | IModule | IModuleMember> {
     try {
       const token = this._resolveToken(data);
@@ -110,6 +122,10 @@ export class ImportResolver {
       const knownModule = this._resolveKnownModule(data);
       if (knownModule !== null) {
         return knownModule;
+      }
+      const localFile = await this._resolveLocalFile(data);
+      if (localFile !== null) {
+        return localFile;
       }
 
       const baseURL = this._options.settings.composite.requirejsCDN as string;
@@ -121,7 +137,7 @@ export class ImportResolver {
         );
       }
 
-      const externalAMDModule = this._resolveAMDModule(data);
+      const externalAMDModule = await this._resolveAMDModule(data);
       if (externalAMDModule !== null) {
         return externalAMDModule;
       }
@@ -159,9 +175,7 @@ export class ImportResolver {
     }
   }
 
-  private _resolveToken(
-    data: PluginTranspiler.IImportStatement
-  ): Token<any> | null {
+  private _resolveToken(data: IImportStatement): Token<any> | null {
     const tokenName = `${data.module}:${data.name}`;
     if (this._options.tokenMap.has(tokenName)) {
       // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
@@ -171,7 +185,7 @@ export class ImportResolver {
   }
 
   private _resolveKnownModule(
-    data: PluginTranspiler.IImportStatement
+    data: IImportStatement
   ): IModule | IModuleMember | null {
     if (
       Object.prototype.hasOwnProperty.call(this._options.modules, data.module)
@@ -197,16 +211,68 @@ export class ImportResolver {
     return null;
   }
 
-  private _resolveAMDModule(data: PluginTranspiler.IImportStatement): any {
+  private async _resolveAMDModule(
+    data: IImportStatement
+  ): Promise<IModule | IModuleMember | null> {
     const require = this._options.requirejs.require;
-    return require([data.module], (mod: any) => {
-      if (data.unpack) {
-        return mod[data.name];
-      } else {
-        return mod;
-      }
-    }, (error: Error) => {
-      throw error;
+    return new Promise((resolve, reject) => {
+      require([data.module], (mod: IModule) => {
+        if (data.unpack) {
+          return resolve(mod[data.name]);
+        } else {
+          return resolve(mod);
+        }
+      }, (error: Error) => {
+        return reject(error);
+      });
     });
+  }
+
+  private async _resolveLocalFile(
+    data: IImportStatement
+  ): Promise<IModule | IModuleMember | null> {
+    if (!data.module.startsWith('.')) {
+      // not a local file, can't help here
+      return null;
+    }
+    const documentManager = this._options.documentManager;
+    if (documentManager === null) {
+      throw Error(
+        `Cannot resolve import of local module ${data.module}: document manager is not available`
+      );
+    }
+    if (!this._options.dynamicLoader) {
+      throw Error(
+        `Cannot resolve import of local module ${data.module}: dynamic loader is not available`
+      );
+    }
+    const path = this._options.basePath;
+    if (path === null) {
+      throw Error(
+        `Cannot resolve import of local module ${data.module}: the base path was not provided`
+      );
+    }
+    const file = await documentManager.services.contents.get(
+      PathExt.join(PathExt.dirname(path), data.module + '.ts')
+    );
+
+    const module = await this._options.dynamicLoader(file.content);
+
+    if (data.isDefault) {
+      return module.default;
+    }
+    if (!Object.prototype.hasOwnProperty.call(module, data.name)) {
+      if (!data.isTypeOnly) {
+        const equivalentTypeImport = formatImport({
+          ...data,
+          isTypeOnly: true
+        });
+        console.warn(
+          `Module ${data.module} does not have a property ${data.name}; if it is type import,` +
+            ` use \`${equivalentTypeImport}\` to avoid this warning.`
+        );
+      }
+    }
+    return module[data.name];
   }
 }
