@@ -33,9 +33,8 @@ export async function loadInIsolated(source: string): Promise<IRequireJS> {
           'Require.js loading did not result in `require` and `define` objects attachment to window'
         );
       }
-      if (iframe.parentNode) {
-        iframe.parentNode.removeChild(iframe);
-      }
+      // Note: cannot remove child from parent node, or require.js will not work
+      // because it's timer will not be able to tick (no window reference)!
       iframe.onload = null;
     };
     document.body.appendChild(iframe);
