@@ -7,7 +7,7 @@ export function formatCDNConsentDialog(
   return (
     <div>
       <p>
-        {moduleName} is not a part of the distribution and needs to be download
+        {moduleName} is not a part of the distribution and needs to be downloaded
         before execution.
       </p>
       <p>The current CDN URL is: {url}</p>
