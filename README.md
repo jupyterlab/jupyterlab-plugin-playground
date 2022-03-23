@@ -86,9 +86,9 @@ There are a few differences in how to write plugins in the Plugin Playground com
   - In addition to JupyterLab and Lumino packages, only AMD modules can be imported; ES6 modules and modules compiled for consumption by Webpack/Node will not work in the current version and an attempt to load such modules will result in `Uncaught SyntaxError: Unexpected token 'export'` error.
 - While the playground will attempt to import relative files (with `.ts` suffix), SVG (as strings), and to load `plugin.json` schema, these are experimental features for rapid prototyping and details are subject to change; other resources like CSS styles are not yet supported (but the support is planned)
 
-### Migrating from version 0.0.3
+### Migrating from version 0.3.0
 
-Version 0.0.3 supported only object-based plugins and require.js based imports.
+Version 0.3.0 supported only object-based plugins and `require.js` based imports.
 While the object-based syntax for defining plugins remains supported, using `require` global reference is now deprecated.
 
 A future version will remove `require` object to prevent confusion between `require` from `require.js`, and native `require` syntax;
