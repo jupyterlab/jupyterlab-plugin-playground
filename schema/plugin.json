@@ -1,6 +1,21 @@
 {
   "title": "Plugin Playground",
+  "jupyter.lab.setting-icon": "ui-components:extension",
+  "jupyter.lab.setting-icon-label": "Plugin Playground",
   "properties": {
+    "allowCDN": {
+      "title": "Allow execution from CDN?",
+      "description": "Whether to allow execution of modules directly from CDN. The accepted values are `never` and `always-insecure`.",
+      "type": "string",
+      "enum": ["awaiting-decision", "always-insecure", "never"],
+      "default": "awaiting-decision"
+    },
+    "requirejsCDN": {
+      "title": "Base URL of a CDN for requirejs",
+      "description": "URL from which the unknown packages should be loaded, e.g. https://unpkg.com/",
+      "default": "https://cdn.jsdelivr.net/npm/",
+      "type": "string"
+    },
     "urls": {
       "title": "Plugin URLs",
       "description": "List of URL strings that will be fetched and loaded as plugins automatically on startup.",
@@ -10,6 +25,12 @@
         "type": "string"
       }
     },
+    "showIconInLauncher": {
+      "title": "Show icon in launcher",
+      "description": "Whether to show the Plugin Playground icon in the lanucher.",
+      "default": true,
+      "type": "boolean"
+    },
     "plugins": {
       "title": "Plugins",
       "description": "List of strings of plugin text to load automatically. Line breaks are encoded as '\\n'",
@@ -18,8 +39,81 @@
       "items": {
         "type": "string"
       }
+    },
+    "toolbar": {
+      "title": "Toolbar items (for JupyterLab 3.3+)",
+      "items": {
+        "$ref": "#/definitions/toolbarItem"
+      },
+      "type": "array",
+      "default": []
     }
   },
-  "additionalProperties": false,
-  "type": "object"
+  "jupyter.lab.transform": false,
+  "jupyter.lab.toolbars": {
+    "Editor": [
+      {
+        "name": "insert",
+        "command": "plugin-playground:load-as-extension",
+        "rank": 20
+      }
+    ]
+  },
+  "jupyter.lab.shortcuts": [
+    {
+      "command": "plugin-playground:load-as-extension",
+      "keys": ["Ctrl Alt C"],
+      "selector": ".jp-Editor"
+    }
+  ],
+  "additionalProperties": true,
+  "type": "object",
+  "definitions": {
+    "toolbarItem": {
+      "properties": {
+        "name": {
+          "title": "Unique name",
+          "type": "string"
+        },
+        "args": {
+          "title": "Command arguments",
+          "type": "object"
+        },
+        "command": {
+          "title": "Command id",
+          "type": "string",
+          "default": ""
+        },
+        "disabled": {
+          "title": "Whether the item is ignored or not",
+          "type": "boolean",
+          "default": false
+        },
+        "icon": {
+          "title": "Item icon id",
+          "description": "If defined, it will override the command icon",
+          "type": "string"
+        },
+        "label": {
+          "title": "Item label",
+          "description": "If defined, it will override the command label",
+          "type": "string"
+        },
+        "type": {
+          "title": "Item type",
+          "type": "string",
+          "enum": ["command", "spacer"]
+        },
+        "rank": {
+          "title": "Item rank",
+          "type": "number",
+          "minimum": 0,
+          "default": 50
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": false,
+      "type": "object"
+    }
+  }
 }

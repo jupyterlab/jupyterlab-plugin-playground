@@ -52,5 +52,8 @@ SETTINGS = Path(sys.prefix) / "share/jupyter/lab/settings"
 SETTINGS.mkdir(parents=True, exist_ok=True)
 shutil.copy2("binder/overrides.json", SETTINGS / "overrides.json")
 
+# download examples
+_("git", "clone", "https://github.com/jupyterlab/extension-examples.git")
+
 print("JupyterLab with @jupyterlab/plugin-playground is ready to run with:\n")
 print("\tjupyter lab\n")

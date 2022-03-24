@@ -15,11 +15,11 @@ module.exports = {
     '@typescript-eslint/naming-convention': [
       'error',
       {
-        'selector': 'interface',
-        'format': ['PascalCase'],
-        'custom': {
-          'regex': '^I[A-Z]',
-          'match': true
+        selector: 'interface',
+        format: ['PascalCase'],
+        custom: {
+          regex: '^I[A-Z]',
+          match: true
         }
       }
     ],
@@ -33,7 +33,7 @@ module.exports = {
       { avoidEscape: true, allowTemplateLiterals: false }
     ],
     curly: ['error', 'all'],
-    eqeqeq: 'error',
+    eqeqeq: ['error', 'smart'],
     'prefer-arrow-callback': 'error'
   }
 };

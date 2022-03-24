@@ -6,6 +6,7 @@ include package.json
 include install.json
 include ts*.json
 include yarn.lock
+include *.config.js
 
 graft jupyterlab_plugin_playground/labextension
 
