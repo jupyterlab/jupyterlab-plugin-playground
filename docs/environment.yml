@@ -1,0 +1,19 @@
+name: jupyterlab-plugin-playground-lite
+
+channels:
+- conda-forge
+
+dependencies:
+- python=3.10
+- mamba
+- pydata-sphinx-theme
+- myst-parser
+- empack
+- ipywidgets>=7.7,<8
+- jupyterlab>=3.4.3,<4
+- jupyterlab-language-pack-fr-FR
+- jupyterlab-language-pack-zh-CN
+- pip:
+  - jupyterlite-sphinx
+  - jupyterlite-xeus-python>=0.5
+  - jupyterlite==0.1.0b11
