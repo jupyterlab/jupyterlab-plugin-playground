@@ -29,15 +29,13 @@ import { PluginLoader, PluginLoadingError } from './loader';
 
 import { PluginTranspiler } from './transpiler';
 
-import { modules } from './modules';
+import { loadKnownModule } from './modules';
 
 import { formatErrorWithResult } from './errors';
 
 import { ImportResolver } from './resolver';
 
 import { IRequireJS, RequireJSLoader } from './requirejs';
-
-import { IModule } from './types';
 
 namespace CommandIDs {
   export const createNewFile = 'plugin-playground:create-new-plugin';
@@ -77,7 +75,7 @@ class PluginPlayground {
     protected settings: ISettingRegistry.ISettings,
     protected requirejs: IRequireJS
   ) {
-    modules['@jupyter-widgets/base'].then((module: any) => {
+    loadKnownModule('@jupyter-widgets/base').then((module: any) => {
       // Define the widgets base module for RequireJS (left for compatibility only)
       requirejs.define('@jupyter-widgets/base', [], () => module);
     });
@@ -177,7 +175,7 @@ class PluginPlayground {
       tokenMap.get('jupyter.extensions.jupyterWidgetRegistry')
     );
     const importResolver = new ImportResolver({
-      modules: modules as unknown as Record<string, Promise<IModule>>,
+      loadKnownModule: loadKnownModule,
       tokenMap: tokenMap,
       requirejs: this.requirejs,
       settings: this.settings,

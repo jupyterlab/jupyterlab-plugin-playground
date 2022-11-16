@@ -25,7 +25,7 @@ function handleImportError(error: Error, module: string) {
 
 export namespace ImportResolver {
   export interface IOptions {
-    modules: Record<string, Promise<IModule>>;
+    loadKnownModule: (name: string) => Promise<IModule | null>;
     tokenMap: Map<string, Token<any>>;
     requirejs: IRequireJS;
     settings: ISettingRegistry.ISettings;
@@ -172,10 +172,7 @@ export class ImportResolver {
   }
 
   private async _resolveKnownModule(module: string): Promise<IModule | null> {
-    if (Object.prototype.hasOwnProperty.call(this._options.modules, module)) {
-      return this._options.modules[module];
-    }
-    return null;
+    return this._options.loadKnownModule(module);
   }
 
   private async _resolveAMDModule(

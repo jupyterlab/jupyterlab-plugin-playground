@@ -16,8 +16,15 @@ IGNORED_MODULES = {
 }
 
 TEMPLATE = """\
-export const modules = {{
-  {key_map_string}
+import type {{ IModule }} from './types';
+
+
+export function loadKnownModule(name: string): Promise<IModule | null> {{
+  switch (name) {{
+    {key_map_string}
+    default:
+      return Promise.resolve(null);
+  }}
 }};
 """
 
@@ -29,12 +36,12 @@ def create_modules_map(core_modules, extra_modules, ignored_modules):
     } - set(ignored_modules))
 
     key_map = [
-        f"'{module}': import('{module}') as any"
+        f"case '{module}':\n      return import('{module}') as any;"
         for module in modules_to_export
     ]
 
     modules_dot_ts = TEMPLATE.format(
-        key_map_string=',\n  '.join(key_map)
+        key_map_string='\n    '.join(key_map)
     )
     return modules_dot_ts
 
