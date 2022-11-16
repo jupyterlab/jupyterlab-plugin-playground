@@ -25,7 +25,7 @@ function handleImportError(error: Error, module: string) {
 
 export namespace ImportResolver {
   export interface IOptions {
-    modules: Record<string, IModule>;
+    modules: Record<string, Promise<IModule>>;
     tokenMap: Map<string, Token<any>>;
     requirejs: IRequireJS;
     settings: ISettingRegistry.ISettings;
@@ -115,7 +115,7 @@ export class ImportResolver {
         }
       };
 
-      const knownModule = this._resolveKnownModule(module);
+      const knownModule = await this._resolveKnownModule(module);
       if (knownModule !== null) {
         return new Proxy(knownModule, tokenAndDefaultHandler);
       }
@@ -171,7 +171,7 @@ export class ImportResolver {
     }
   }
 
-  private _resolveKnownModule(module: string): IModule | null {
+  private async _resolveKnownModule(module: string): Promise<IModule | null> {
     if (Object.prototype.hasOwnProperty.call(this._options.modules, module)) {
       return this._options.modules[module];
     }

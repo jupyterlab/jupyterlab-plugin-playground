@@ -1,107 +1,56 @@
-import * as jupyter_widgets_base from '@jupyter-widgets/base';
-import * as jupyterlab_application from '@jupyterlab/application';
-import * as jupyterlab_apputils from '@jupyterlab/apputils';
-import * as jupyterlab_codeeditor from '@jupyterlab/codeeditor';
-import * as jupyterlab_codemirror from '@jupyterlab/codemirror';
-import * as jupyterlab_completer from '@jupyterlab/completer';
-import * as jupyterlab_console from '@jupyterlab/console';
-import * as jupyterlab_coreutils from '@jupyterlab/coreutils';
-import * as jupyterlab_debugger from '@jupyterlab/debugger';
-import * as jupyterlab_docmanager from '@jupyterlab/docmanager';
-import * as jupyterlab_docprovider from '@jupyterlab/docprovider';
-import * as jupyterlab_docregistry from '@jupyterlab/docregistry';
-import * as jupyterlab_documentsearch from '@jupyterlab/documentsearch';
-import * as jupyterlab_extensionmanager from '@jupyterlab/extensionmanager';
-import * as jupyterlab_filebrowser from '@jupyterlab/filebrowser';
-import * as jupyterlab_fileeditor from '@jupyterlab/fileeditor';
-import * as jupyterlab_imageviewer from '@jupyterlab/imageviewer';
-import * as jupyterlab_inspector from '@jupyterlab/inspector';
-import * as jupyterlab_launcher from '@jupyterlab/launcher';
-import * as jupyterlab_logconsole from '@jupyterlab/logconsole';
-import * as jupyterlab_mainmenu from '@jupyterlab/mainmenu';
-import * as jupyterlab_markdownviewer from '@jupyterlab/markdownviewer';
-import * as jupyterlab_notebook from '@jupyterlab/notebook';
-import * as jupyterlab_outputarea from '@jupyterlab/outputarea';
-import * as jupyterlab_rendermime from '@jupyterlab/rendermime';
-import * as jupyterlab_rendermime_interfaces from '@jupyterlab/rendermime-interfaces';
-import * as jupyterlab_services from '@jupyterlab/services';
-import * as jupyterlab_settingeditor from '@jupyterlab/settingeditor';
-import * as jupyterlab_settingregistry from '@jupyterlab/settingregistry';
-import * as jupyterlab_shared_models from '@jupyterlab/shared-models';
-import * as jupyterlab_statedb from '@jupyterlab/statedb';
-import * as jupyterlab_statusbar from '@jupyterlab/statusbar';
-import * as jupyterlab_terminal from '@jupyterlab/terminal';
-import * as jupyterlab_toc from '@jupyterlab/toc';
-import * as jupyterlab_tooltip from '@jupyterlab/tooltip';
-import * as jupyterlab_translation from '@jupyterlab/translation';
-import * as jupyterlab_ui_components from '@jupyterlab/ui-components';
-import * as lumino_algorithm from '@lumino/algorithm';
-import * as lumino_application from '@lumino/application';
-import * as lumino_commands from '@lumino/commands';
-import * as lumino_coreutils from '@lumino/coreutils';
-import * as lumino_datagrid from '@lumino/datagrid';
-import * as lumino_disposable from '@lumino/disposable';
-import * as lumino_domutils from '@lumino/domutils';
-import * as lumino_dragdrop from '@lumino/dragdrop';
-import * as lumino_messaging from '@lumino/messaging';
-import * as lumino_properties from '@lumino/properties';
-import * as lumino_signaling from '@lumino/signaling';
-import * as lumino_virtualdom from '@lumino/virtualdom';
-import * as lumino_widgets from '@lumino/widgets';
-import * as react from 'react';
-import * as react_dom from 'react-dom';
-
 export const modules = {
-  '@jupyter-widgets/base': jupyter_widgets_base,
-  '@jupyterlab/application': jupyterlab_application,
-  '@jupyterlab/apputils': jupyterlab_apputils,
-  '@jupyterlab/codeeditor': jupyterlab_codeeditor,
-  '@jupyterlab/codemirror': jupyterlab_codemirror,
-  '@jupyterlab/completer': jupyterlab_completer,
-  '@jupyterlab/console': jupyterlab_console,
-  '@jupyterlab/coreutils': jupyterlab_coreutils,
-  '@jupyterlab/debugger': jupyterlab_debugger,
-  '@jupyterlab/docmanager': jupyterlab_docmanager,
-  '@jupyterlab/docprovider': jupyterlab_docprovider,
-  '@jupyterlab/docregistry': jupyterlab_docregistry,
-  '@jupyterlab/documentsearch': jupyterlab_documentsearch,
-  '@jupyterlab/extensionmanager': jupyterlab_extensionmanager,
-  '@jupyterlab/filebrowser': jupyterlab_filebrowser,
-  '@jupyterlab/fileeditor': jupyterlab_fileeditor,
-  '@jupyterlab/imageviewer': jupyterlab_imageviewer,
-  '@jupyterlab/inspector': jupyterlab_inspector,
-  '@jupyterlab/launcher': jupyterlab_launcher,
-  '@jupyterlab/logconsole': jupyterlab_logconsole,
-  '@jupyterlab/mainmenu': jupyterlab_mainmenu,
-  '@jupyterlab/markdownviewer': jupyterlab_markdownviewer,
-  '@jupyterlab/notebook': jupyterlab_notebook,
-  '@jupyterlab/outputarea': jupyterlab_outputarea,
-  '@jupyterlab/rendermime': jupyterlab_rendermime,
-  '@jupyterlab/rendermime-interfaces': jupyterlab_rendermime_interfaces,
-  '@jupyterlab/services': jupyterlab_services,
-  '@jupyterlab/settingeditor': jupyterlab_settingeditor,
-  '@jupyterlab/settingregistry': jupyterlab_settingregistry,
-  '@jupyterlab/shared-models': jupyterlab_shared_models,
-  '@jupyterlab/statedb': jupyterlab_statedb,
-  '@jupyterlab/statusbar': jupyterlab_statusbar,
-  '@jupyterlab/terminal': jupyterlab_terminal,
-  '@jupyterlab/toc': jupyterlab_toc,
-  '@jupyterlab/tooltip': jupyterlab_tooltip,
-  '@jupyterlab/translation': jupyterlab_translation,
-  '@jupyterlab/ui-components': jupyterlab_ui_components,
-  '@lumino/algorithm': lumino_algorithm,
-  '@lumino/application': lumino_application,
-  '@lumino/commands': lumino_commands,
-  '@lumino/coreutils': lumino_coreutils,
-  '@lumino/datagrid': lumino_datagrid,
-  '@lumino/disposable': lumino_disposable,
-  '@lumino/domutils': lumino_domutils,
-  '@lumino/dragdrop': lumino_dragdrop,
-  '@lumino/messaging': lumino_messaging,
-  '@lumino/properties': lumino_properties,
-  '@lumino/signaling': lumino_signaling,
-  '@lumino/virtualdom': lumino_virtualdom,
-  '@lumino/widgets': lumino_widgets,
-  react: react,
-  'react-dom': react_dom
+  '@jupyter-widgets/base': import('@jupyter-widgets/base') as any,
+  '@jupyterlab/application': import('@jupyterlab/application') as any,
+  '@jupyterlab/apputils': import('@jupyterlab/apputils') as any,
+  '@jupyterlab/cell-toolbar': import('@jupyterlab/cell-toolbar') as any,
+  '@jupyterlab/codeeditor': import('@jupyterlab/codeeditor') as any,
+  '@jupyterlab/codemirror': import('@jupyterlab/codemirror') as any,
+  '@jupyterlab/collaboration': import('@jupyterlab/collaboration') as any,
+  '@jupyterlab/completer': import('@jupyterlab/completer') as any,
+  '@jupyterlab/console': import('@jupyterlab/console') as any,
+  '@jupyterlab/coreutils': import('@jupyterlab/coreutils') as any,
+  '@jupyterlab/debugger': import('@jupyterlab/debugger') as any,
+  '@jupyterlab/docmanager': import('@jupyterlab/docmanager') as any,
+  '@jupyterlab/docprovider': import('@jupyterlab/docprovider') as any,
+  '@jupyterlab/docregistry': import('@jupyterlab/docregistry') as any,
+  '@jupyterlab/documentsearch': import('@jupyterlab/documentsearch') as any,
+  '@jupyterlab/extensionmanager': import('@jupyterlab/extensionmanager') as any,
+  '@jupyterlab/filebrowser': import('@jupyterlab/filebrowser') as any,
+  '@jupyterlab/fileeditor': import('@jupyterlab/fileeditor') as any,
+  '@jupyterlab/imageviewer': import('@jupyterlab/imageviewer') as any,
+  '@jupyterlab/inspector': import('@jupyterlab/inspector') as any,
+  '@jupyterlab/launcher': import('@jupyterlab/launcher') as any,
+  '@jupyterlab/logconsole': import('@jupyterlab/logconsole') as any,
+  '@jupyterlab/mainmenu': import('@jupyterlab/mainmenu') as any,
+  '@jupyterlab/markdownviewer': import('@jupyterlab/markdownviewer') as any,
+  '@jupyterlab/notebook': import('@jupyterlab/notebook') as any,
+  '@jupyterlab/outputarea': import('@jupyterlab/outputarea') as any,
+  '@jupyterlab/rendermime': import('@jupyterlab/rendermime') as any,
+  '@jupyterlab/rendermime-interfaces': import('@jupyterlab/rendermime-interfaces') as any,
+  '@jupyterlab/services': import('@jupyterlab/services') as any,
+  '@jupyterlab/settingeditor': import('@jupyterlab/settingeditor') as any,
+  '@jupyterlab/settingregistry': import('@jupyterlab/settingregistry') as any,
+  '@jupyterlab/shared-models': import('@jupyterlab/shared-models') as any,
+  '@jupyterlab/statedb': import('@jupyterlab/statedb') as any,
+  '@jupyterlab/statusbar': import('@jupyterlab/statusbar') as any,
+  '@jupyterlab/terminal': import('@jupyterlab/terminal') as any,
+  '@jupyterlab/toc': import('@jupyterlab/toc') as any,
+  '@jupyterlab/tooltip': import('@jupyterlab/tooltip') as any,
+  '@jupyterlab/translation': import('@jupyterlab/translation') as any,
+  '@jupyterlab/ui-components': import('@jupyterlab/ui-components') as any,
+  '@lumino/algorithm': import('@lumino/algorithm') as any,
+  '@lumino/application': import('@lumino/application') as any,
+  '@lumino/commands': import('@lumino/commands') as any,
+  '@lumino/coreutils': import('@lumino/coreutils') as any,
+  '@lumino/datagrid': import('@lumino/datagrid') as any,
+  '@lumino/disposable': import('@lumino/disposable') as any,
+  '@lumino/domutils': import('@lumino/domutils') as any,
+  '@lumino/dragdrop': import('@lumino/dragdrop') as any,
+  '@lumino/messaging': import('@lumino/messaging') as any,
+  '@lumino/properties': import('@lumino/properties') as any,
+  '@lumino/signaling': import('@lumino/signaling') as any,
+  '@lumino/virtualdom': import('@lumino/virtualdom') as any,
+  '@lumino/widgets': import('@lumino/widgets') as any,
+  'react': import('react') as any,
+  'react-dom': import('react-dom') as any
 };

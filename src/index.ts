@@ -77,12 +77,10 @@ class PluginPlayground {
     protected settings: ISettingRegistry.ISettings,
     protected requirejs: IRequireJS
   ) {
-    // Define the widgets base module for RequireJS (left for compatibility only)
-    requirejs.define(
-      '@jupyter-widgets/base',
-      [],
-      () => modules['@jupyter-widgets/base']
-    );
+    modules['@jupyter-widgets/base'].then((module: any) => {
+      // Define the widgets base module for RequireJS (left for compatibility only)
+      requirejs.define('@jupyter-widgets/base', [], () => module);
+    });
 
     app.commands.addCommand(CommandIDs.loadCurrentAsExtension, {
       label: 'Load Current File As Extension',
@@ -179,7 +177,7 @@ class PluginPlayground {
       tokenMap.get('jupyter.extensions.jupyterWidgetRegistry')
     );
     const importResolver = new ImportResolver({
-      modules: modules as unknown as Record<string, IModule>,
+      modules: modules as unknown as Record<string, Promise<IModule>>,
       tokenMap: tokenMap,
       requirejs: this.requirejs,
       settings: this.settings,
