@@ -2,7 +2,7 @@
 {
     "LiteBuildConfig": {
       "federated_extensions": [
-        "..//jupyterlab_plugin_playground/labextension"
+        "../jupyterlab_plugin_playground/labextension"
       ],
       "ignore_sys_prefix": true,
       "piplite_urls": [
