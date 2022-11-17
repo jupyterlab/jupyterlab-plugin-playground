@@ -29,15 +29,13 @@ import { PluginLoader, PluginLoadingError } from './loader';
 
 import { PluginTranspiler } from './transpiler';
 
-import { modules } from './modules';
+import { loadKnownModule } from './modules';
 
 import { formatErrorWithResult } from './errors';
 
 import { ImportResolver } from './resolver';
 
 import { IRequireJS, RequireJSLoader } from './requirejs';
-
-import { IModule } from './types';
 
 namespace CommandIDs {
   export const createNewFile = 'plugin-playground:create-new-plugin';
@@ -77,12 +75,10 @@ class PluginPlayground {
     protected settings: ISettingRegistry.ISettings,
     protected requirejs: IRequireJS
   ) {
-    // Define the widgets base module for RequireJS (left for compatibility only)
-    requirejs.define(
-      '@jupyter-widgets/base',
-      [],
-      () => modules['@jupyter-widgets/base']
-    );
+    loadKnownModule('@jupyter-widgets/base').then((module: any) => {
+      // Define the widgets base module for RequireJS (left for compatibility only)
+      requirejs.define('@jupyter-widgets/base', [], () => module);
+    });
 
     app.commands.addCommand(CommandIDs.loadCurrentAsExtension, {
       label: 'Load Current File As Extension',
@@ -122,7 +118,13 @@ class PluginPlayground {
           });
         if (widget) {
           widget.content.ready.then(() => {
-            widget.content.model.value.text = PLUGIN_TEMPLATE;
+            if (typeof widget.content.model.value !== 'undefined') {
+              // JupyterLab 3.x
+              widget.content.model.value.text = PLUGIN_TEMPLATE;
+            } else {
+              // JupyterLab 4.x
+              widget.content.model.sharedModel.setSource(PLUGIN_TEMPLATE);
+            }
           });
         }
         return widget;
@@ -167,11 +169,15 @@ class PluginPlayground {
   }
 
   private async _loadPlugin(code: string, path: string | null) {
+    const app = this.app as any;
+    // `_serviceMap` in Lumino 1.x (JupyterLab 3.x), `_services` in Lumino 2.x (JupyterLab 4.0)
+    const serviceTokens =
+      typeof app._serviceMap !== 'undefined'
+        ? app._serviceMap.keys()
+        : app._services.keys();
+
     const tokenMap = new Map(
-      Array.from((this.app as any)._serviceMap.keys()).map((t: any) => [
-        t.name,
-        t
-      ])
+      Array.from(serviceTokens).map((t: any) => [t.name, t])
     );
     // Widget registry does not follow convention of importName:tokenName
     tokenMap.set(
@@ -179,7 +185,7 @@ class PluginPlayground {
       tokenMap.get('jupyter.extensions.jupyterWidgetRegistry')
     );
     const importResolver = new ImportResolver({
-      modules: modules as unknown as Record<string, IModule>,
+      loadKnownModule: loadKnownModule,
       tokenMap: tokenMap,
       requirejs: this.requirejs,
       settings: this.settings,

@@ -2,15 +2,6 @@ from jupyterlab.coreconfig import CoreConfig
 import jupyterlab
 
 
-def to_identifier(package_name: str):
-    return (
-        package_name
-        .replace('@', '')
-        .replace('-', '_')
-        .replace('/', '_')
-    )
-
-
 # packages not used in core, but required for examples
 EXTRA_MODULES = {
     '@jupyterlab/docregistry',
@@ -25,10 +16,15 @@ IGNORED_MODULES = {
 }
 
 TEMPLATE = """\
-{imports_string}
+import type {{ IModule }} from './types';
 
-export const modules = {{
-  {key_map_string}
+
+export function loadKnownModule(name: string): Promise<IModule | null> {{
+  switch (name) {{
+    {key_map_string}
+    default:
+      return Promise.resolve(null);
+  }}
 }};
 """
 
@@ -38,19 +34,14 @@ def create_modules_map(core_modules, extra_modules, ignored_modules):
         *core_modules,
         *extra_modules
     } - set(ignored_modules))
-    imports = [
-        f"import * as {to_identifier(module)} from '{module}';"
-        for module in modules_to_export
-    ]
 
     key_map = [
-        f"'{module}': {to_identifier(module)}"
+        f"case '{module}':\n      return import('{module}') as any;"
         for module in modules_to_export
     ]
 
     modules_dot_ts = TEMPLATE.format(
-        imports_string='\n'.join(imports),
-        key_map_string=',\n  '.join(key_map)
+        key_map_string='\n    '.join(key_map)
     )
     return modules_dot_ts
 
