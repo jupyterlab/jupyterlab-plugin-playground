@@ -169,11 +169,15 @@ class PluginPlayground {
   }
 
   private async _loadPlugin(code: string, path: string | null) {
+    const app = this.app as any;
+    // `_serviceMap` in Lumino 1.x (JupyterLab 3.x), `_services` in Lumino 2.x (JupyterLab 4.0)
+    const serviceTokens =
+      typeof app._serviceMap !== 'undefined'
+        ? app._serviceMap.keys()
+        : app._services.keys();
+
     const tokenMap = new Map(
-      Array.from((this.app as any)._serviceMap.keys()).map((t: any) => [
-        t.name,
-        t
-      ])
+      Array.from(serviceTokens).map((t: any) => [t.name, t])
     );
     // Widget registry does not follow convention of importName:tokenName
     tokenMap.set(
