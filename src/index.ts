@@ -118,7 +118,13 @@ class PluginPlayground {
           });
         if (widget) {
           widget.content.ready.then(() => {
-            widget.content.model.value.text = PLUGIN_TEMPLATE;
+            if (typeof widget.content.model.value !== 'undefined') {
+              // JupyterLab 3.x
+              widget.content.model.value.text = PLUGIN_TEMPLATE;
+            } else {
+              // JupyterLab 4.x
+              widget.content.model.sharedModel.setSource(PLUGIN_TEMPLATE);
+            }
           });
         }
         return widget;
