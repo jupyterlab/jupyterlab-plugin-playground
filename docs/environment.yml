@@ -14,6 +14,7 @@ dependencies:
 - jupyterlab>=3.4.3,<4
 - jupyterlab-language-pack-fr-FR
 - jupyterlab-language-pack-zh-CN
+- nodejs=16
 - pip:
   - jupyterlite-sphinx
   - jupyterlite-xeus-python>=0.5
