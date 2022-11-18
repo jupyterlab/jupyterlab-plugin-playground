@@ -9,13 +9,11 @@ dependencies:
 - mamba
 - pydata-sphinx-theme
 - myst-parser
-- empack
-- ipywidgets>=7.7,<8
-- jupyterlab>=3.4.3,<4
+- ipywidgets>=8.0,<9
+- jupyterlab>=3.5.0,<4
 - jupyterlab-language-pack-fr-FR
 - jupyterlab-language-pack-zh-CN
-- nodejs=16
+- nodejs=18
 - pip:
   - jupyterlite-sphinx
-  - jupyterlite-xeus-python>=0.5
   - jupyterlite==0.1.0b14

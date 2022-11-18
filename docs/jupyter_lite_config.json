@@ -3,9 +3,6 @@
     "LiteBuildConfig": {
       "federated_extensions": [
         "../jupyterlab_plugin_playground/labextension"
-      ],
-      "piplite_urls": [
-        "../dist"
       ]
     }
   }
