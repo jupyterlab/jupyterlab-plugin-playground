@@ -3,6 +3,14 @@
     "LiteBuildConfig": {
       "federated_extensions": [
         "../jupyterlab_plugin_playground/labextension"
-      ]
+      ],
+      "extra_file_types": {
+        "typescript": {
+          "name": "typescript",
+          "extensions": [".ts"],
+          "mimetypes": ["text/plain"],
+          "fileFormat": "text"
+        }
+      }
     }
   }
