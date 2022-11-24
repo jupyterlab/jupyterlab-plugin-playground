@@ -1,5 +1,5 @@
 ```{hint}
-Try `jupyterlab-plugin-playground` in your browser right now [![try-badge]][try]
+Try `jupyterlab-plugin-playground` in your browser [right now][try]
 ```
 
 [try]: ./lite/lab/index.html?path=example.ts
