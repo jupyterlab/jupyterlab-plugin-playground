@@ -1,8 +1,7 @@
 ```{hint}
-Try `jupyterlab-plugin-playground` in your browser [right now][try]
+Try `jupyterlab-plugin-playground` in your browser right now [![try-badge]](./lite/lab/index.html?path=example.ts)
 ```
 
-[try]: ./lite/lab/index.html?path=example.ts
 [try-badge]: https://jupyterlite.rtfd.io/en/latest/_static/badge.svg
 
 
