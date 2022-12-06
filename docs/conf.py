@@ -1,4 +1,4 @@
-extensions = ["myst_parser", "jupyterlite_sphinx"]
+extensions = ["myst_parser", "jupyterlite_sphinx", "sphinxext.rediraffe"]
 
 jupyterlite_config = "jupyter_lite_config.json"
 jupyterlite_dir = "."
