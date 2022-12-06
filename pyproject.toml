@@ -2,22 +2,14 @@
 requires = [
     "hatchling",
     "jupyterlab~=3.0",
+    "hatch-nodejs-version",
 ]
 build-backend = "hatchling.build"
 
 [project]
 name = "jupyterlab-plugin-playground"
-description = "A JupyterLab Plugin Playground."
 readme = "README.md"
-requires-python = ">=3.6"
-authors = [
-    { name = "Project Jupyter Contributors" },
-]
-keywords = [
-    "Jupyter",
-    "JupyterLab",
-    "JupyterLab3",
-]
+requires-python = ">=3.7"
 classifiers = [
     "Framework :: Jupyter",
     "Framework :: Jupyter :: JupyterLab",
@@ -27,19 +19,19 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
-dependencies = []
-version = "0.4.0"
+dynamic = ["version", "description", "authors", "urls", "keywords"]
+
+[tool.hatch.version]
+source = "nodejs"
 
 [project.license]
 file = "LICENSE"
-
-[project.urls]
-Homepage = "https://github.com/jupyterlab/jupyterlab-plugin-playground"
 
 [tool.hatch.build.targets.wheel.shared-data]
 "jupyterlab_plugin_playground/labextension/static" = "share/jupyter/labextensions/@jupyterlab/plugin-playground/static"
@@ -79,27 +71,8 @@ npm = [
     "jlpm",
 ]
 
-[tool.tbump]
-field = [
-    { name = "channel", default = "" },
-    { name = "release", default = "" },
-]
-
-[tool.tbump.version]
-current = "0.4.0"
-regex = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)((?P<channel>a|b|rc|.dev)(?P<release>\\d+))?"
-
-[tool.tbump.git]
-message_template = "Bump to {new_version}"
-tag_template = "v{new_version}"
-
-[[tool.tbump.file]]
-src = "pyproject.toml"
-version_template = "version = \"{major}.{minor}.{patch}{channel}{release}\""
-
-[[tool.tbump.file]]
-src = "package.json"
-version_template = "\"version\": \"{major}.{minor}.{patch}{channel}{release}\""
+[tool.jupyter-releaser.options]
+version_cmd = "hatch version"
 
 [[tool.jupyter-releaser.hooks]]
 before-build-npm": [
