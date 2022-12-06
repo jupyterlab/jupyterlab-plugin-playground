@@ -69,3 +69,13 @@ jobs:
         pip install jupyterlab
         jupyter labextension list 2>&1 | grep -ie "@jupyterlab/plugin-playground.*OK"
         python -m jupyterlab.browser_check --no-chrome-test
+
+  check_links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - uses: jupyterlab/maintainer-tools/.github/actions/check-links@v1
+        with:
+          ignore_links: "./lite/lab/.*"

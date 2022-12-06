@@ -14,4 +14,4 @@ build_cmd = "build:prod"
 npm = ["jlpm"]
 
 [tool.check-manifest]
-ignore = ["jupyterlab_plugin_playground/labextension/**", "yarn.lock", ".*", "package-lock.json", "scripts/**"]
+ignore = ["docs/**", "jupyterlab_plugin_playground/labextension/**", "yarn.lock", ".*", "package-lock.json", "scripts/**"]
