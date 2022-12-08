@@ -5,6 +5,8 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
   switch (name) {
     case '@jupyter-widgets/base':
       return import('@jupyter-widgets/base') as any;
+    case '@jupyter/ydoc':
+      return import('@jupyter/ydoc') as any;
     case '@jupyterlab/application':
       return import('@jupyterlab/application') as any;
     case '@jupyterlab/apputils':
@@ -63,8 +65,6 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@jupyterlab/settingeditor') as any;
     case '@jupyterlab/settingregistry':
       return import('@jupyterlab/settingregistry') as any;
-    case '@jupyterlab/shared-models':
-      return import('@jupyterlab/shared-models') as any;
     case '@jupyterlab/statedb':
       return import('@jupyterlab/statedb') as any;
     case '@jupyterlab/statusbar':
