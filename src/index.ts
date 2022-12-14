@@ -246,7 +246,14 @@ class PluginPlayground {
 
     // Unregister plugin if already registered.
     if (this.app.hasPlugin(plugin.id)) {
-      delete (this.app as any)._pluginMap[plugin.id];
+      try {
+        if (plugin.deactivate) {
+          await this.app.deactivatePlugin(plugin.id);
+        }
+        this.app.deregisterPlugin(plugin.id, true);
+      } catch (reason) {
+        showErrorMessage('Deactivation of the old plugin failed', reason);
+      }
     }
     (this.app as any).registerPluginModule(plugin);
     if (plugin.autoStart) {
