@@ -2,8 +2,6 @@
 import json
 from pathlib import Path
 
-from ._version import __version__
-
 HERE = Path(__file__).parent.resolve()
 
 with (HERE / "labextension" / "package.json").open() as fid:

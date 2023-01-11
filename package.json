@@ -13,7 +13,8 @@
   },
   "license": "BSD-3-Clause",
   "author": {
-    "name": "Project Jupyter Contributors"
+    "name": "Project Jupyter Contributors",
+    "email": ""
   },
   "files": [
     "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
@@ -37,10 +38,13 @@
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
     "clean:labextension": "rimraf jupyterlab_plugin_playground/labextension",
     "clean:all": "jlpm run clean:lib && jlpm run clean:labextension",
-    "prettier": "prettier --list-different --write \"**/*{.ts,.tsx,.css,.json}\"",
+    "eslint": "jlpm eslint:check --fix",
+    "eslint:check": "eslint . --cache --ext .ts,.tsx",
     "lint": "jlpm prettier && jlpm eslint",
-    "eslint": "eslint . --ext .ts,.tsx --fix",
-    "eslint:check": "eslint . --ext .ts,.tsx",
+    "lint:check": "jlpm prettier:check && jlpm eslint:check",
+    "prettier": "jlpm prettier:base --write --list-different",
+    "prettier:base": "prettier \"**/*{.ts,.tsx,.js,.jsx,.css,.json,.md}\"",
+    "prettier:check": "jlpm prettier:base --check",
     "install:extension": "jlpm run build",
     "watch": "run-p watch:src watch:labextension",
     "watch:src": "tsc -w",
@@ -103,14 +107,5 @@
     "extension": true,
     "outputDir": "jupyterlab_plugin_playground/labextension",
     "schemaDir": "schema"
-  },
-  "jupyter-releaser": {
-    "skip": ["check-links"],
-    "hooks": {
-      "before-build-npm": [
-        "python -m pip install jupyterlab~=3.0",
-        "jlpm"
-      ]
-    }
   }
 }
