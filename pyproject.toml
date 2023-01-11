@@ -65,7 +65,7 @@ build_dir = "jupyterlab_plugin_playground/labextension"
 version_cmd = "hatch version"
 
 [[tool.jupyter-releaser.hooks]]
-before-build-npm": [
+before-build-npm" = [
     "python -m pip install jupyterlab~=3.0",
     "jlpm",
     "jlpm build:prod"
