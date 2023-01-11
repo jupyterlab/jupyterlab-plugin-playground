@@ -38,6 +38,8 @@
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
     "clean:labextension": "rimraf jupyterlab_plugin_playground/labextension",
     "clean:all": "jlpm run clean:lib && jlpm run clean:labextension",
+    "eslint": "jlpm eslint:check --fix",
+    "eslint:check": "eslint . --cache --ext .ts,.tsx",
     "lint": "jlpm prettier && jlpm eslint",
     "lint:check": "jlpm prettier:check && jlpm eslint:check",
     "prettier": "jlpm prettier:base --write --list-different",
