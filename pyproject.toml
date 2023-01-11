@@ -66,5 +66,6 @@ version_cmd = "hatch version"
 [[tool.jupyter-releaser.hooks]]
 before-build-npm": [
     "python -m pip install jupyterlab~=3.0",
-    "jlpm"
+    "jlpm",
+    "jlpm build:prod"
 ]
