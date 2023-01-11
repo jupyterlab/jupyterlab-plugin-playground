@@ -1,6 +1,6 @@
 {
-    "jupyter-lite-schema-version": 0,
-    "jupyter-config-data": {
-      "appName": "JupyterLab Plugin Playground"
-    }
+  "jupyter-lite-schema-version": 0,
+  "jupyter-config-data": {
+    "appName": "JupyterLab Plugin Playground"
+  }
 }

@@ -62,20 +62,20 @@ import { IJupyterWidgetRegistry } from '@jupyter-widgets/base';
 // Use RequireJS to load the AMD module. '@*' selects the latest version
 // and `/dist/index.js` loads the corresponding module containing bqplot
 // from the CDN configured in Settings (`requirejsCDN`).
-import bqplot from "bqplot@*/dist/index";
+import bqplot from 'bqplot@*/dist/index';
 
 const plugin = {
   id: 'mydynamicwidget',
   autoStart: true,
   requires: [IJupyterWidgetRegistry],
-  activate: function(app, widgets: IJupyterWidgetRegistry) {
+  activate: function (app, widgets: IJupyterWidgetRegistry) {
     widgets.registerWidget({
-        name: 'bqplot',
-        version: bqplot.version,
-        exports: bqplot
+      name: 'bqplot',
+      version: bqplot.version,
+      exports: bqplot
     });
   }
-}
+};
 export default plugin;
 ```
 
@@ -97,6 +97,7 @@ please use `requirejs` (an alias function with the same signature) instead, or m
 Require.js is not available in the ES6-syntax based plugins.
 
 To migrate to the ES6-compatible syntax:
+
 - assign the plugin object to a variable, e.g. `const plugin = { /* plugin code without changes */ };`,
 - add `export default plugin;` line,
 - convert `require()` calls to ES6 default imports.
