@@ -13,7 +13,6 @@ dependencies:
 - jupyterlab>=3.5.0,<4
 - jupyterlab-language-pack-fr-FR
 - jupyterlab-language-pack-zh-CN
+- jupyterlite>=0.1.2,<0.2.0
+- jupyterlite-sphinx>=0.9.1,<0.10.0
 - nodejs=18
-- pip:
-  - jupyterlite-sphinx
-  - jupyterlite==0.1.0b14
