@@ -1,6 +1,5 @@
 import type { IModule } from './types';
 
-
 export function loadKnownModule(name: string): Promise<IModule | null> {
   switch (name) {
     case '@jupyter-widgets/base':
@@ -112,4 +111,4 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
     default:
       return Promise.resolve(null);
   }
-};
+}
