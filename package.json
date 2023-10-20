@@ -180,6 +180,7 @@
     },
     "eslintIgnore": [
         "node_modules",
+        "docs",
         "dist",
         "coverage",
         "**/*.d.ts"
