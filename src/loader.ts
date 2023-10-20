@@ -160,7 +160,7 @@ export class PluginLoader {
         }
         return token;
       })
-      .filter((token): token is Token<any> => token != null);
+      .filter((token): token is Token<any> => token !== null);
     return {
       schema,
       plugin,
