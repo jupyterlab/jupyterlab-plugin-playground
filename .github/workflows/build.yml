@@ -12,13 +12,13 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Base Setup
       uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
     - name: Install dependencies
-      run: python -m pip install -U jupyterlab~=3.1
+      run: python -m pip install -U "jupyterlab>=4.0.0,<5"
 
     - name: Lint the extension
       run: |
@@ -41,13 +41,13 @@ jobs:
 
         pip install build
         python -m build
-        pip uninstall -y "jupyterlab_plugin_playground" jupyterlab
+        pip uninstall -y "jupyterlab-plugin-playground" jupyterlab
 
     - name: Upload extension packages
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: extension-artifacts
-        path: dist/jupyterlab_plugin_playground*
+        path: dist/jupyterlab-plugin-playground*
         if-no-files-found: error
 
   test_isolated:
@@ -55,14 +55,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
     - name: Install Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.9'
         architecture: 'x64'
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       with:
         name: extension-artifacts
     - name: Install and Test
@@ -72,12 +70,12 @@ jobs:
         sudo rm -rf $(which node)
         sudo rm -rf $(which node)
 
-        pip install "jupyterlab~=3.1" jupyterlab_plugin_playground*.whl
+        pip install "jupyterlab>=4.0.0,<5" jupyterlab-plugin-playground*.whl
 
 
         jupyter labextension list
         jupyter labextension list 2>&1 | grep -ie "@jupyterlab/plugin-playground.*OK"
-        python -m jupyterlab.browser_check --no-chrome-test
+        python -m jupyterlab.browser_check --no-browser-test
 
 
   check_links:
@@ -85,6 +83,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - uses: jupyterlab/maintainer-tools/.github/actions/check-links@v1
