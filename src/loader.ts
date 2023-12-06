@@ -22,7 +22,7 @@ export namespace PluginLoader {
      * For backward-compatibility with plugins using requirejs over `import`;
      */
     requirejs: IRequireJS;
-    serviceManager: ServiceManager | null;
+    serviceManager: ServiceManager.IManager | null;
   }
   export interface IResult {
     plugin: IPlugin<any, any>;
