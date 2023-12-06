@@ -32,24 +32,24 @@ source = "nodejs"
 fields = ["description", "authors", "urls"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["jupyterlab-plugin-playground/labextension"]
+artifacts = ["jupyterlab_plugin_playground/labextension"]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel.shared-data]
-"jupyterlab-plugin-playground/labextension" = "share/jupyter/labextensions/@jupyterlab/plugin-playground"
+"jupyterlab_plugin_playground/labextension" = "share/jupyter/labextensions/@jupyterlab/plugin-playground"
 "install.json" = "share/jupyter/labextensions/@jupyterlab/plugin-playground/install.json"
 
 [tool.hatch.build.hooks.version]
-path = "jupyterlab-plugin-playground/_version.py"
+path = "jupyterlab_plugin_playground/_version.py"
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
-    "jupyterlab-plugin-playground/labextension/static/style.js",
-    "jupyterlab-plugin-playground/labextension/package.json",
+    "jupyterlab_plugin_playground/labextension/static/style.js",
+    "jupyterlab_plugin_playground/labextension/package.json",
 ]
-skip-if-exists = ["jupyterlab-plugin-playground/labextension/static/style.js"]
+skip-if-exists = ["jupyterlab_plugin_playground/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
@@ -59,7 +59,7 @@ npm = ["jlpm"]
 build_cmd = "install:extension"
 npm = ["jlpm"]
 source_dir = "src"
-build_dir = "jupyterlab-plugin-playground/labextension"
+build_dir = "jupyterlab_plugin_playground/labextension"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatch version"

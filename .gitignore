@@ -7,9 +7,9 @@ node_modules/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
-jupyterlab-plugin-playground/labextension
+jupyterlab_plugin_playground/labextension
 # Version file is handled by hatchling
-jupyterlab-plugin-playground/_version.py
+jupyterlab_plugin_playground/_version.py
 
 # Created by https://www.gitignore.io/api/python
 # Edit at https://www.gitignore.io/?templates=python

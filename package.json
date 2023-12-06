@@ -38,7 +38,7 @@
         "build:prod": "jlpm clean && jlpm build:lib:prod && jlpm build:labextension",
         "clean": "jlpm clean:lib",
         "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
-        "clean:labextension": "rimraf jupyterlab-plugin-playground/labextension jupyterlab-plugin-playground/_version.py",
+        "clean:labextension": "rimraf jupyterlab_plugin_playground/labextension jupyterlab_plugin_playground/_version.py",
         "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
         "clean:lintcache": "rimraf .eslintcache .stylelintcache",
         "eslint": "jlpm eslint:check --fix",
@@ -119,7 +119,7 @@
     "jupyterlab": {
         "webpackConfig": "./webpack.config.js",
         "extension": true,
-        "outputDir": "jupyterlab-plugin-playground/labextension",
+        "outputDir": "jupyterlab_plugin_playground/labextension",
         "schemaDir": "schema"
     },
     "eslintConfig": {
