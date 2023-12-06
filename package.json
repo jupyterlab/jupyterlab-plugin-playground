@@ -56,7 +56,7 @@
         "watch:src": "tsc -w --sourceMap"
     },
     "dependencies": {
-        "@jupyter-widgets/base": "^4.0.0",
+        "@jupyter-widgets/base": "^6.0.6",
         "@jupyterlab/application": "^4.0.7",
         "@jupyterlab/apputils": "^4.1.7",
         "@jupyterlab/fileeditor": "^4.0.7",
