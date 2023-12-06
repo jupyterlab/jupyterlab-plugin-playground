@@ -1,0 +1,14 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.2.2
+_src_path: https://github.com/jupyterlab/extension-template
+author_email: ''
+author_name: Project Jupyter Contributors
+has_binder: true
+has_settings: true
+kind: frontend
+labextension_name: '@jupyterlab/plugin-playground'
+project_short_description: A JupyterLab Plugin Playground.
+python_name: jupyterlab-plugin-playground
+repository: https://github.com/jupyterlab/jupyterlab-plugin-playground.git
+test: false
+
