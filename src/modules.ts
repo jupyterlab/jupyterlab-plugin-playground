@@ -24,8 +24,6 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@jupyterlab/debugger') as any;
     case '@jupyterlab/docmanager':
       return import('@jupyterlab/docmanager') as any;
-    case '@jupyterlab/docprovider':
-      return import('@jupyterlab/docprovider') as any;
     case '@jupyterlab/docregistry':
       return import('@jupyterlab/docregistry') as any;
     case '@jupyterlab/documentsearch':
@@ -62,8 +60,6 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@jupyterlab/settingeditor') as any;
     case '@jupyterlab/settingregistry':
       return import('@jupyterlab/settingregistry') as any;
-    case '@jupyterlab/shared-models':
-      return import('@jupyterlab/shared-models') as any;
     case '@jupyterlab/statedb':
       return import('@jupyterlab/statedb') as any;
     case '@jupyterlab/statusbar':
