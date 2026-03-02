@@ -164,11 +164,13 @@ class PluginPlayground {
 
   private async _loadPlugin(code: string, path: string | null) {
     const app = this.app as any;
-    // `_serviceMap` in Lumino 1.x (JupyterLab 3.x), `_services` in Lumino 2.x (JupyterLab 4.0)
-    const serviceTokens =
-      typeof app._serviceMap !== 'undefined'
-        ? app._serviceMap.keys()
-        : app._services.keys();
+    // Service registry location changed across Lumino/JupyterLab versions.
+    const serviceMap =
+      app._serviceMap ?? app._services ?? app.pluginRegistry?._services;
+    if (!serviceMap || typeof serviceMap.keys !== 'function') {
+      throw new Error('Could not access application service token map');
+    }
+    const serviceTokens = serviceMap.keys();
 
     const tokenMap = new Map(
       Array.from(serviceTokens).map((t: any) => [t.name, t])
