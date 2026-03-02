@@ -15,3 +15,5 @@ dependencies:
 - jupyterlite>=0.2.0
 - jupyterlite-sphinx>=0.10.0
 - nodejs=18
+- pip:
+  - build
