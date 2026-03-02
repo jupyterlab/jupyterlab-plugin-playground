@@ -4,9 +4,8 @@ channels:
 - conda-forge
 
 dependencies:
-- build
 - python=3.10
-- mamba
+- pip
 - pydata-sphinx-theme
 - myst-parser
 - ipywidgets>=8.0,<9
