@@ -105,7 +105,7 @@ export class PluginTranspiler {
         return ts.visitEachChild(node, child => visit(child), context);
       };
 
-      return source => ts.visitNode(source, visit);
+      return source => ts.visitNode(source, visit) as ts.SourceFile;
     };
   }
 
@@ -133,7 +133,7 @@ export class PluginTranspiler {
       };
 
       return source => {
-        const traveresed = ts.visitNode(source, visit);
+        const traveresed = ts.visitNode(source, visit) as ts.SourceFile;
         if (!defaultExport) {
           throw new NoDefaultExportError('Default export not found');
         }

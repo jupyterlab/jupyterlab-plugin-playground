@@ -6,6 +6,7 @@
     "esModuleInterop": true,
     "incremental": true,
     "jsx": "react",
+    "lib": ["dom", "es2020", "es2020.intl", "esnext.asynciterable"],
     "module": "esnext",
     "moduleResolution": "node",
     "noEmitOnError": true,
@@ -13,11 +14,12 @@
     "noUnusedLocals": true,
     "preserveWatchOutput": true,
     "resolveJsonModule": true,
+    "skipLibCheck": true,
     "outDir": "lib",
     "rootDir": "src",
     "strict": true,
     "strictNullChecks": true,
-    "target": "es2017",
+    "target": "es2020",
     "types": []
   },
   "include": ["src/*"]
