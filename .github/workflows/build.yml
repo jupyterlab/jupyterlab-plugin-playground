@@ -44,7 +44,7 @@ jobs:
         pip uninstall -y "jupyterlab_plugin_playground" jupyterlab
 
     - name: Upload extension packages
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: extension-artifacts
         path: dist/jupyterlab_plugin_playground*
@@ -62,7 +62,7 @@ jobs:
       with:
         python-version: '3.9'
         architecture: 'x64'
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v4
       with:
         name: extension-artifacts
     - name: Install and Test
