@@ -1,4 +1,4 @@
-# Integration Tests (Galata)
+# Integration Tests (ui-tests)
 
 Browser integration tests for `@jupyterlab/plugin-playground` using:
 
@@ -12,25 +12,25 @@ jlpm run build:prod
 jlpm run test:integration
 ```
 
-## setup
+## Setup
 
 ```bash
-cd galata
+cd ui-tests
 jlpm install
 jlpm playwright install chromium
 ```
 
-## commands
+## Commands
 
 ```bash
 # List tests
-cd galata && jlpm playwright test --list
+cd ui-tests && jlpm playwright test --list
 
 # Run only this plugin spec
-cd galata && jlpm playwright test tests/plugin-playground.spec.ts --workers=1
+cd ui-tests && jlpm playwright test tests/plugin-playground.spec.ts --workers=1
 ```
 
 ## Outputs
 
-- `galata/playwright-report`
-- `galata/test-results`
+- `ui-tests/playwright-report`
+- `ui-tests/test-results`

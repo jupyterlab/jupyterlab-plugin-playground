@@ -104,8 +104,8 @@ jobs:
         set -eux
         python -m pip install "jupyterlab>=4,<5" jupyterlab_plugin_playground*.whl
 
-    - name: Install galata dependencies
-      working-directory: galata
+    - name: Install ui-tests dependencies
+      working-directory: ui-tests
       run: jlpm install
 
     - name: Set up browser cache
@@ -113,17 +113,17 @@ jobs:
       with:
         path: |
           ${{ github.workspace }}/pw-browsers
-        key: ${{ runner.os }}-${{ hashFiles('galata/yarn.lock') }}
+        key: ${{ runner.os }}-${{ hashFiles('ui-tests/yarn.lock') }}
 
     - name: Install browser
-      working-directory: galata
+      working-directory: ui-tests
       run: |
         set -eux
         jlpm playwright install-deps
         jlpm playwright install chromium
 
     - name: Execute integration tests
-      working-directory: galata
+      working-directory: ui-tests
       run: |
         set -eux
         jlpm test
@@ -134,8 +134,8 @@ jobs:
       with:
         name: playwright-tests
         path: |
-          galata/test-results
-          galata/playwright-report
+          ui-tests/test-results
+          ui-tests/playwright-report
 
   check_links:
     name: Check Links

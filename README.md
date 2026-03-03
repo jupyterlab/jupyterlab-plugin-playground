@@ -158,7 +158,7 @@ jupyter lab build --minimize=False
 
 ### Integration tests
 
-Integration tests live in `galata` (Playwright + Galata).
+Integration tests live in `ui-tests` (Playwright + Galata).
 
 Run from repository root:
 
@@ -170,12 +170,12 @@ jlpm run test:integration
 setup:
 
 ```bash
-cd galata
+cd ui-tests
 jlpm install
 jlpm playwright install chromium
 ```
 
-See `galata/README.md` for focused test commands.
+See `ui-tests/README.md` for focused test commands.
 
 ### Development uninstall
 

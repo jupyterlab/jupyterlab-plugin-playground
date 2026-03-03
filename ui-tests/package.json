@@ -1,5 +1,5 @@
 {
-  "name": "jupyterlab-plugin-playground-galata-tests",
+  "name": "jupyterlab-plugin-playground-ui-tests",
   "version": "1.0.0",
   "description": "JupyterLab Plugin Playground integration tests",
   "private": true,

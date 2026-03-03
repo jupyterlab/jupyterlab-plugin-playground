@@ -4094,9 +4094,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jupyterlab-plugin-playground-galata-tests@workspace:.":
+"jupyterlab-plugin-playground-ui-tests@workspace:.":
   version: 0.0.0-use.local
-  resolution: "jupyterlab-plugin-playground-galata-tests@workspace:."
+  resolution: "jupyterlab-plugin-playground-ui-tests@workspace:."
   dependencies:
     "@jupyterlab/galata": 5.5.5
     "@playwright/test": 1.58.2

@@ -50,8 +50,8 @@
     "watch": "run-p watch:src watch:labextension",
     "watch:src": "tsc -w",
     "watch:labextension": "jupyter labextension watch .",
-    "test:integration": "jlpm --cwd galata test",
-    "test:integration:update": "jlpm --cwd galata test:update"
+    "test:integration": "cd ui-tests && jlpm test",
+    "test:integration:update": "cd ui-tests && jlpm test:update"
   },
   "dependencies": {
     "@jupyter-widgets/base": "^6.0.0",
