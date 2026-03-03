@@ -3,13 +3,14 @@ import jupyterlab
 
 
 # Additional modules to include in the generated known-module map.
-# These augment the modules discovered from CoreConfig.
+# Keep this as an explicit supplement to the modules discovered from CoreConfig.
 EXTRA_MODULES = {
+    '@jupyter/collaborative-drive',
+    '@jupyter/docprovider',
     '@jupyterlab/attachments',
     '@jupyterlab/cells',
     '@jupyterlab/csvviewer',
     '@jupyterlab/docregistry',
-    '@jupyterlab/nbconvert-css',
     '@jupyterlab/nbformat',
     '@jupyterlab/observables',
     '@jupyterlab/outputarea',
@@ -21,6 +22,9 @@ EXTRA_MODULES = {
 
 # modules which are implementation detail and unlikely to be used directly in playground
 IGNORED_MODULES = {
+    '@jupyterlab/nbconvert-css',
+    '@microsoft/fast-element',
+    '@microsoft/fast-foundation',
     'yjs'
 }
 

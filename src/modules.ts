@@ -11,6 +11,10 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@codemirror/view') as any;
     case '@jupyter-widgets/base':
       return import('@jupyter-widgets/base') as any;
+    case '@jupyter/collaborative-drive':
+      return import('@jupyter/collaborative-drive') as any;
+    case '@jupyter/docprovider':
+      return import('@jupyter/docprovider') as any;
     case '@jupyter/react-components':
       return import('@jupyter/react-components') as any;
     case '@jupyter/web-components':
@@ -41,12 +45,8 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@jupyterlab/csvviewer') as any;
     case '@jupyterlab/debugger':
       return import('@jupyterlab/debugger') as any;
-    case '@jupyter/collaborative-drive':
-      return import('@jupyter/collaborative-drive') as any;
     case '@jupyterlab/docmanager':
       return import('@jupyterlab/docmanager') as any;
-    case '@jupyter/docprovider':
-      return import('@jupyter/docprovider') as any;
     case '@jupyterlab/docregistry':
       return import('@jupyterlab/docregistry') as any;
     case '@jupyterlab/documentsearch':
@@ -77,8 +77,6 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@jupyterlab/mermaid') as any;
     case '@jupyterlab/metadataform':
       return import('@jupyterlab/metadataform') as any;
-    case '@jupyterlab/nbconvert-css':
-      return import('@jupyterlab/nbconvert-css') as any;
     case '@jupyterlab/nbformat':
       return import('@jupyterlab/nbformat') as any;
     case '@jupyterlab/notebook':
@@ -153,10 +151,6 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@lumino/virtualdom') as any;
     case '@lumino/widgets':
       return import('@lumino/widgets') as any;
-    case '@microsoft/fast-element':
-      return import('@microsoft/fast-element') as any;
-    case '@microsoft/fast-foundation':
-      return import('@microsoft/fast-foundation') as any;
     case 'react':
       return import('react') as any;
     case 'react-dom':
