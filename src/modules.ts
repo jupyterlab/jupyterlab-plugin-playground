@@ -25,6 +25,8 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@jupyterlab/debugger') as any;
     case '@jupyterlab/docmanager':
       return import('@jupyterlab/docmanager') as any;
+    case '@jupyter/docprovider':
+      return import('@jupyter/docprovider') as any;
     case '@jupyterlab/docregistry':
       return import('@jupyterlab/docregistry') as any;
     case '@jupyterlab/documentsearch':
