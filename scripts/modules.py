@@ -2,10 +2,19 @@ from jupyterlab.coreconfig import CoreConfig
 import jupyterlab
 
 
-# packages not used in core, but required for examples
+# Additional modules to include in the generated known-module map.
+# These augment the modules discovered from CoreConfig.
 EXTRA_MODULES = {
+    '@jupyterlab/attachments',
+    '@jupyterlab/cells',
+    '@jupyterlab/csvviewer',
     '@jupyterlab/docregistry',
+    '@jupyterlab/nbconvert-css',
+    '@jupyterlab/nbformat',
+    '@jupyterlab/observables',
     '@jupyterlab/outputarea',
+    '@jupyterlab/property-inspector',
+    '@jupyterlab/running',
     '@jupyter-widgets/base',
     '@lumino/datagrid'
 }
