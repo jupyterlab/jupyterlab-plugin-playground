@@ -1371,6 +1371,7 @@ __metadata:
   resolution: "@jupyterlab/plugin-playground@workspace:."
   dependencies:
     "@jupyter-widgets/base": ^6.0.0
+    "@jupyter/collaborative-drive": ^4.2.1
     "@jupyter/docprovider": ^4.1.1
     "@jupyterlab/application": ^4.5.5
     "@jupyterlab/apputils": ^4.6.5

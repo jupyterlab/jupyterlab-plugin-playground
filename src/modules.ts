@@ -23,6 +23,8 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@jupyterlab/coreutils') as any;
     case '@jupyterlab/debugger':
       return import('@jupyterlab/debugger') as any;
+    case '@jupyter/collaborative-drive':
+      return import('@jupyter/collaborative-drive') as any;
     case '@jupyterlab/docmanager':
       return import('@jupyterlab/docmanager') as any;
     case '@jupyter/docprovider':
