@@ -62,6 +62,8 @@
     "typescript": "~5.7.3"
   },
   "devDependencies": {
+    "@jupyter/collaborative-drive": "^4.2.1",
+    "@jupyter/docprovider": "^4.1.1",
     "@jupyterlab/builder": "^4.5.5",
     "@jupyterlab/cell-toolbar": "^4.5.5",
     "@jupyterlab/completer": "^4.5.5",
