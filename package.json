@@ -49,7 +49,9 @@
     "install:extension": "jlpm run build",
     "watch": "run-p watch:src watch:labextension",
     "watch:src": "tsc -w",
-    "watch:labextension": "jupyter labextension watch ."
+    "watch:labextension": "jupyter labextension watch .",
+    "test:integration": "jlpm --cwd galata test",
+    "test:integration:update": "jlpm --cwd galata test:update"
   },
   "dependencies": {
     "@jupyter-widgets/base": "^6.0.0",

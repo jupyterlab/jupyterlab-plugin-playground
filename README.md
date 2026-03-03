@@ -156,6 +156,27 @@ By default, the `jlpm run build` command generates the source maps for this exte
 jupyter lab build --minimize=False
 ```
 
+### Integration tests
+
+Integration tests live in `galata` (Playwright + Galata).
+
+Run from repository root:
+
+```bash
+jlpm run build:prod
+jlpm run test:integration
+```
+
+setup:
+
+```bash
+cd galata
+jlpm install
+jlpm playwright install chromium
+```
+
+See `galata/README.md` for focused test commands.
+
 ### Development uninstall
 
 ```bash
