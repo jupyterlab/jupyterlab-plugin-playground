@@ -29,7 +29,7 @@ export namespace ImportResolver {
     tokenMap: Map<string, Token<any>>;
     requirejs: IRequireJS;
     settings: ISettingRegistry.ISettings;
-    serviceManager: ServiceManager | null;
+    serviceManager: ServiceManager.IManager | null;
     dynamicLoader?: (transpiledCode: string) => Promise<IModule>;
     /**
      * Path of the module to load, used to resolve relative imports.

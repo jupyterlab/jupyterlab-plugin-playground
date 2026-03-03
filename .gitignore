@@ -1,6 +1,7 @@
 *.bundle.*
 lib/
 node_modules/
+.yarn/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo

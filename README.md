@@ -8,7 +8,7 @@ A JupyterLab extension to write and load simple JupyterLab plugins inside Jupyte
 
 ## Install
 
-This extension requires JupyterLab 3. Install this extension with pip:
+This extension requires JupyterLab 4. Install this extension with pip:
 
 ```bash
 pip install jupyterlab-plugin-playground
@@ -54,7 +54,7 @@ export default plugin;
 
 While in the text editor, load this plugin in JupyterLab by invoking the Command Palette and executing `Load Current File As Extension`. Invoke the Command Palette again and you will see a new command "My Super Cool Toggle". Executing this new command will toggle the checkbox next to the command.
 
-As another more advanced example, we load the [bqplot](https://bqplot.readthedocs.io) Jupyter Widget library from the cloud using RequireJS. This assumes you have the [ipywidgets JupyterLab extension](https://ipywidgets.readthedocs.io/en/stable/user_install.html#installing-in-jupyterlab-3-0) installed.
+As another more advanced example, we load the [bqplot](https://bqplot.readthedocs.io) Jupyter Widget library from the cloud using RequireJS. This assumes you have the [ipywidgets JupyterLab extension](https://ipywidgets.readthedocs.io/en/stable/user_install.html#installing-in-jupyterlab) installed.
 
 ```typescript
 // IJupyterWidgetRegistry token is provided with Plugin Playground

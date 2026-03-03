@@ -18,7 +18,7 @@ jobs:
       uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
     - name: Install dependencies
-      run: python -m pip install -U jupyterlab~=3.1
+      run: python -m pip install -U "jupyterlab>=4,<5"
 
     - name: Lint the extension
       run: |
@@ -44,7 +44,7 @@ jobs:
         pip uninstall -y "jupyterlab_plugin_playground" jupyterlab
 
     - name: Upload extension packages
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: extension-artifacts
         path: dist/jupyterlab_plugin_playground*
@@ -62,7 +62,7 @@ jobs:
       with:
         python-version: '3.9'
         architecture: 'x64'
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v4
       with:
         name: extension-artifacts
     - name: Install and Test
@@ -72,7 +72,7 @@ jobs:
         sudo rm -rf $(which node)
         sudo rm -rf $(which node)
 
-        pip install "jupyterlab~=3.1" jupyterlab_plugin_playground*.whl
+        pip install "jupyterlab>=4,<5" jupyterlab_plugin_playground*.whl
 
 
         jupyter labextension list
