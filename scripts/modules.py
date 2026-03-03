@@ -2,16 +2,29 @@ from jupyterlab.coreconfig import CoreConfig
 import jupyterlab
 
 
-# packages not used in core, but required for examples
+# Additional modules to include in the generated known-module map.
+# Keep this as an explicit supplement to the modules discovered from CoreConfig.
 EXTRA_MODULES = {
+    '@jupyter/collaborative-drive',
+    '@jupyter/docprovider',
+    '@jupyterlab/attachments',
+    '@jupyterlab/cells',
+    '@jupyterlab/csvviewer',
     '@jupyterlab/docregistry',
+    '@jupyterlab/nbformat',
+    '@jupyterlab/observables',
     '@jupyterlab/outputarea',
+    '@jupyterlab/property-inspector',
+    '@jupyterlab/running',
     '@jupyter-widgets/base',
     '@lumino/datagrid'
 }
 
 # modules which are implementation detail and unlikely to be used directly in playground
 IGNORED_MODULES = {
+    '@jupyterlab/nbconvert-css',
+    '@microsoft/fast-element',
+    '@microsoft/fast-foundation',
     'yjs'
 }
 
