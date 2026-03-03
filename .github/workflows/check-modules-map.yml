@@ -1,0 +1,27 @@
+name: Check Known Modules Map
+
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: '*'
+
+jobs:
+  check_modules_map:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
+      - name: Install dependencies
+        run: python -m pip install -U "jupyterlab>=4,<5"
+
+      - name: Regenerate known modules map
+        run: python scripts/modules.py
+
+      - name: Fail on generated file drift
+        run: git diff --exit-code -- src/modules.ts
