@@ -7407,12 +7407,12 @@ __metadata:
   linkType: hard
 
 "requirejs@npm:^2.3.6":
-  version: 2.3.6
-  resolution: "requirejs@npm:2.3.6"
+  version: 2.3.8
+  resolution: "requirejs@npm:2.3.8"
   bin:
-    r.js: ./bin/r.js
-    r_js: ./bin/r.js
-  checksum: 7c3c006bf5e1887d93ac7adb7f600328918d23cf3d28282a505a2873d4ddde499c7ec560e55cee3440d17fe1205cb4dcb72b07f35b39e8940372eca850e49b62
+    r.js: bin/r.js
+    r_js: bin/r.js
+  checksum: b5f7df6f982b3c1d3fb4e06f239d3a4acb144b64a911537e40ddc3d9d154685ebe6e9a9c026c0beaad555ffeae6bd31dfe2c3d67a0044b9ab59a2a21e7d0a6f2
   languageName: node
   linkType: hard
 
