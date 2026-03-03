@@ -22,7 +22,7 @@ export namespace PluginLoader {
      * For backward-compatibility with plugins using requirejs over `import`;
      */
     requirejs: IRequireJS;
-    serviceManager: ServiceManager | null;
+    serviceManager: ServiceManager.IManager | null;
   }
   export interface IResult {
     plugin: IPlugin<any, any>;
@@ -126,7 +126,10 @@ export class PluginLoader {
         );
       }
     } catch (e) {
-      throw new PluginLoadingError(e, { code: functionBody, transpiled });
+      throw new PluginLoadingError(e as Error, {
+        code: functionBody,
+        transpiled
+      });
     }
 
     // We allow one level of indirection (return a function instead of a plugin)

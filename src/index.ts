@@ -118,13 +118,7 @@ class PluginPlayground {
           });
         if (widget) {
           widget.content.ready.then(() => {
-            if (typeof widget.content.model.value !== 'undefined') {
-              // JupyterLab 3.x
-              widget.content.model.value.text = PLUGIN_TEMPLATE;
-            } else {
-              // JupyterLab 4.x
-              widget.content.model.sharedModel.setSource(PLUGIN_TEMPLATE);
-            }
+            widget.content.model.sharedModel.setSource(PLUGIN_TEMPLATE);
           });
         }
         return widget;
@@ -170,11 +164,13 @@ class PluginPlayground {
 
   private async _loadPlugin(code: string, path: string | null) {
     const app = this.app as any;
-    // `_serviceMap` in Lumino 1.x (JupyterLab 3.x), `_services` in Lumino 2.x (JupyterLab 4.0)
-    const serviceTokens =
-      typeof app._serviceMap !== 'undefined'
-        ? app._serviceMap.keys()
-        : app._services.keys();
+    // Service registry location changed across Lumino/JupyterLab versions.
+    const serviceMap =
+      app._serviceMap ?? app._services ?? app.pluginRegistry?._services;
+    if (!serviceMap || typeof serviceMap.keys !== 'function') {
+      throw new Error('Could not access application service token map');
+    }
+    const serviceTokens = serviceMap.keys();
 
     const tokenMap = new Map(
       Array.from(serviceTokens).map((t: any) => [t.name, t])
@@ -246,16 +242,16 @@ class PluginPlayground {
 
     // Unregister plugin if already registered.
     if (this.app.hasPlugin(plugin.id)) {
-      delete (this.app as any)._pluginMap[plugin.id];
+      this.app.deregisterPlugin(plugin.id, true);
     }
-    (this.app as any).registerPluginModule(plugin);
+    this.app.registerPlugin(plugin);
     if (plugin.autoStart) {
       try {
         await this.app.activatePlugin(plugin.id);
       } catch (e) {
         showDialog({
           title: `Plugin autostart failed: ${(e as Error).message}`,
-          body: formatErrorWithResult(e, result)
+          body: formatErrorWithResult(e as Error, result)
         });
         return;
       }
