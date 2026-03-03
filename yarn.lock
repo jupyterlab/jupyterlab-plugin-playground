@@ -6197,13 +6197,13 @@ __metadata:
   linkType: hard
 
 "loader-utils@npm:^2.0.0":
-  version: 2.0.2
-  resolution: "loader-utils@npm:2.0.2"
+  version: 2.0.4
+  resolution: "loader-utils@npm:2.0.4"
   dependencies:
     big.js: ^5.2.2
     emojis-list: ^3.0.0
     json5: ^2.1.2
-  checksum: 9078d1ed47cadc57f4c6ddbdb2add324ee7da544cea41de3b7f1128e8108fcd41cd3443a85b7ee8d7d8ac439148aa221922774efe4cf87506d4fb054d5889303
+  checksum: a5281f5fff1eaa310ad5e1164095689443630f3411e927f95031ab4fb83b4a98f388185bb1fe949e8ab8d4247004336a625e9255c22122b815bb9a4c5d8fc3b7
   languageName: node
   linkType: hard
 
@@ -7398,12 +7398,12 @@ __metadata:
   linkType: hard
 
 "requirejs@npm:^2.3.6":
-  version: 2.3.6
-  resolution: "requirejs@npm:2.3.6"
+  version: 2.3.8
+  resolution: "requirejs@npm:2.3.8"
   bin:
-    r.js: ./bin/r.js
-    r_js: ./bin/r.js
-  checksum: 7c3c006bf5e1887d93ac7adb7f600328918d23cf3d28282a505a2873d4ddde499c7ec560e55cee3440d17fe1205cb4dcb72b07f35b39e8940372eca850e49b62
+    r.js: bin/r.js
+    r_js: bin/r.js
+  checksum: b5f7df6f982b3c1d3fb4e06f239d3a4acb144b64a911537e40ddc3d9d154685ebe6e9a9c026c0beaad555ffeae6bd31dfe2c3d67a0044b9ab59a2a21e7d0a6f2
   languageName: node
   linkType: hard
 
