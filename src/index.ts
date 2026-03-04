@@ -92,9 +92,6 @@ interface IPrivatePluginData {
 }
 
 class PluginPlayground {
-  private readonly _tokenMap = new Map<string, Token<string>>();
-  private readonly _tokenDescriptionMap = new Map<string, string>();
-
   constructor(
     protected app: JupyterFrontEnd,
     protected settingRegistry: ISettingRegistry,
@@ -175,13 +172,19 @@ class PluginPlayground {
       }));
       const tokenSidebar = new TokenSidebar({
         tokens,
-        onInsertImport: this._insertTokenImport.bind(this)
+        onInsertImport: this._insertTokenImport.bind(this),
+        isImportEnabled: this._canInsertImport.bind(this)
       });
       tokenSidebar.id = 'jp-plugin-token-sidebar';
-      tokenSidebar.title.label = 'Service Tokens';
       tokenSidebar.title.caption = 'Available service token strings for plugin';
       tokenSidebar.title.icon = extensionIcon;
       this.app.shell.add(tokenSidebar, 'right', { rank: 650 });
+      app.shell.currentChanged?.connect(() => {
+        tokenSidebar.update();
+      });
+      editorTracker.currentChanged.connect(() => {
+        tokenSidebar.update();
+      });
       // add to the launcher
       if (launcher && (settings.composite.showIconInLauncher as boolean)) {
         launcher.add({
@@ -417,7 +420,7 @@ class PluginPlayground {
       await showDialog({
         title: 'Cannot generate import statement',
         body: `Token "${tokenName}" does not follow the package:token format.`,
-        buttons: [Dialog.okButton({ label: 'OK' })]
+        buttons: [Dialog.okButton()]
       });
       return;
     }
@@ -427,7 +430,7 @@ class PluginPlayground {
       await showDialog({
         title: 'No active editor',
         body: 'Open a text editor tab to insert an import statement.',
-        buttons: [Dialog.okButton({ label: 'OK' })]
+        buttons: [Dialog.okButton()]
       });
       return;
     }
@@ -437,7 +440,7 @@ class PluginPlayground {
       await showDialog({
         title: 'No editable content',
         body: 'The active tab does not expose editable source text.',
-        buttons: [Dialog.okButton({ label: 'OK' })]
+        buttons: [Dialog.okButton()]
       });
       return;
     }
@@ -465,6 +468,19 @@ class PluginPlayground {
     }
     return `import { ${tokenSymbol} } from '${packageName}';`;
   }
+
+  private _canInsertImport(): boolean {
+    const editorWidget = this.editorTracker.currentWidget;
+    if (!editorWidget) {
+      return false;
+    }
+
+    const sourceModel = editorWidget.content.model;
+    return !!(sourceModel && sourceModel.sharedModel);
+  }
+
+  private readonly _tokenMap = new Map<string, Token<string>>();
+  private readonly _tokenDescriptionMap = new Map<string, string>();
 }
 
 /**

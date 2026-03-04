@@ -23,7 +23,7 @@
 .jp-PluginPlayground-tokenCount {
   color: var(--jp-ui-font-color2);
   font-size: var(--jp-ui-font-size0);
-  margin: 0;
+  margin: 5px 0px;
 }
 
 .jp-PluginPlayground-tokenFilter {
@@ -81,6 +81,7 @@
   flex: 0 0 auto;
   font-size: var(--jp-ui-font-size0);
   gap: 4px;
+  line-height: 1;
   padding: 2px 6px;
   justify-content: center;
 }
@@ -97,6 +98,15 @@
 }
 
 .jp-PluginPlayground-actionIcon {
+  align-items: center;
+  display: inline-flex;
+  height: 14px;
+  justify-content: center;
+  width: 14px;
+}
+
+.jp-PluginPlayground-actionIcon svg {
+  display: block;
   height: 14px;
   width: 14px;
 }
@@ -105,5 +115,5 @@
   color: var(--jp-ui-font-color2);
   font-size: var(--jp-ui-font-size0);
   margin: 8px 0 0;
-  white-space: pre-wrap;
+  white-space: normal;
 }

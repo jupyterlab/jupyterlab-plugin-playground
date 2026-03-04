@@ -1,6 +1,11 @@
-import { Dialog, ReactWidget, showDialog } from '@jupyterlab/apputils';
+import {
+  Clipboard,
+  Dialog,
+  ReactWidget,
+  showDialog
+} from '@jupyterlab/apputils';
 
-import { checkIcon, copyIcon } from '@jupyterlab/ui-components';
+import { addIcon, checkIcon, copyIcon } from '@jupyterlab/ui-components';
 
 import * as React from 'react';
 
@@ -13,12 +18,14 @@ export namespace TokenSidebar {
   export interface IOptions {
     tokens: ReadonlyArray<ITokenRecord>;
     onInsertImport: (tokenName: string) => Promise<void> | void;
+    isImportEnabled: () => boolean;
   }
 }
 
 export class TokenSidebar extends ReactWidget {
   private readonly _tokens: ReadonlyArray<TokenSidebar.ITokenRecord>;
   private readonly _onInsertImport: (tokenName: string) => Promise<void> | void;
+  private readonly _isImportEnabled: () => boolean;
   private _query = '';
   private _copiedTokenName: string | null = null;
   private _copiedTimer: number | null = null;
@@ -27,6 +34,7 @@ export class TokenSidebar extends ReactWidget {
     super();
     this._tokens = options.tokens;
     this._onInsertImport = options.onInsertImport;
+    this._isImportEnabled = options.isImportEnabled;
     this.addClass('jp-PluginPlayground-tokenSidebar');
   }
 
@@ -87,12 +95,11 @@ export class TokenSidebar extends ReactWidget {
                       aria-label={`Insert import statement for ${token.name}`}
                       title="Insert import statement"
                     >
-                      <span
-                        aria-hidden="true"
-                        className="jp-PluginPlayground-actionIcon"
-                      >
-                        +
-                      </span>
+                      {React.createElement(addIcon.react, {
+                        tag: 'span',
+                        elementSize: 'normal',
+                        className: 'jp-PluginPlayground-actionIcon'
+                      })}
                     </button>
                     <button
                       className="jp-Button jp-mod-styled jp-mod-minimal jp-PluginPlayground-copyButton"
@@ -151,7 +158,7 @@ export class TokenSidebar extends ReactWidget {
       await showDialog({
         title: 'Failed to insert import statement',
         body: `Could not insert import for "${tokenName}". ${message}`,
-        buttons: [Dialog.okButton({ label: 'OK' })]
+        buttons: [Dialog.okButton()]
       });
     }
   }
@@ -162,40 +169,50 @@ export class TokenSidebar extends ReactWidget {
       return false;
     }
     const tokenSymbol = tokenName.slice(separatorIndex + 1).trim();
-    return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(tokenSymbol);
+    return (
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(tokenSymbol) && this._isImportEnabled()
+    );
   }
 
   private async _copyTokenName(tokenName: string): Promise<void> {
-    if (!navigator.clipboard) {
-      await showDialog({
-        title: 'Clipboard API unavailable',
-        body: 'This browser does not allow clipboard writes in this context.',
-        buttons: [Dialog.okButton({ label: 'OK' })]
-      });
-      return;
-    }
-
     try {
-      await navigator.clipboard.writeText(tokenName);
-      this._copiedTokenName = tokenName;
-      this.update();
-
-      if (this._copiedTimer !== null) {
-        window.clearTimeout(this._copiedTimer);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(tokenName);
+      } else {
+        Clipboard.copyToSystem(tokenName);
       }
-      this._copiedTimer = window.setTimeout(() => {
-        this._copiedTokenName = null;
-        this._copiedTimer = null;
-        this.update();
-      }, 1200);
+      this._setCopiedState(tokenName);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unknown clipboard error';
-      await showDialog({
-        title: 'Failed to copy token string',
-        body: `Could not copy "${tokenName}". ${message}`,
-        buttons: [Dialog.okButton({ label: 'OK' })]
-      });
+      try {
+        Clipboard.copyToSystem(tokenName);
+        this._setCopiedState(tokenName);
+      } catch (fallbackError) {
+        const message =
+          fallbackError instanceof Error
+            ? fallbackError.message
+            : error instanceof Error
+            ? error.message
+            : 'Unknown clipboard error';
+        await showDialog({
+          title: 'Failed to copy token string',
+          body: `Could not copy "${tokenName}". ${message}`,
+          buttons: [Dialog.okButton()]
+        });
+      }
     }
+  }
+
+  private _setCopiedState(tokenName: string): void {
+    this._copiedTokenName = tokenName;
+    this.update();
+
+    if (this._copiedTimer !== null) {
+      window.clearTimeout(this._copiedTimer);
+    }
+    this._copiedTimer = window.setTimeout(() => {
+      this._copiedTokenName = null;
+      this._copiedTimer = null;
+      this.update();
+    }, 1200);
   }
 }
