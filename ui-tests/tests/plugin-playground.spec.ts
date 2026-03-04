@@ -5,6 +5,7 @@ const CREATE_FILE_COMMAND = 'plugin-playground:create-new-plugin';
 const TEST_PLUGIN_ID = 'playground-integration-test:plugin';
 const TEST_TOGGLE_COMMAND = 'playground-integration-test:toggle';
 const TEST_FILE = 'playground-integration-test.ts';
+const TOKEN_SIDEBAR_ID = 'jp-plugin-token-sidebar';
 
 test.use({ autoGoto: false });
 
@@ -107,4 +108,32 @@ test('loads current editor file as a plugin extension', async ({
       return window.jupyterapp.commands.isToggled(id);
     }, TEST_TOGGLE_COMMAND)
   ).resolves.toBe(true);
+});
+
+test('opens token sidebar, shows tokens, and filters by exact token', async ({
+  page
+}) => {
+  await page.goto();
+  const tokenSidebarTab = page.sidebar.getTabLocator(TOKEN_SIDEBAR_ID);
+  await expect(tokenSidebarTab).toBeVisible();
+  await page.sidebar.openTab(TOKEN_SIDEBAR_ID);
+
+  const panel = page.locator(`#${TOKEN_SIDEBAR_ID}`);
+  await expect(panel).toBeVisible();
+
+  const tokenListItems = panel.locator('.jp-PluginPlayground-tokenListItem');
+  await expect(tokenListItems.first()).toBeVisible();
+  expect(await tokenListItems.count()).toBeGreaterThan(0);
+
+  const firstToken = (
+    await panel.locator('.jp-PluginPlayground-tokenString').first().innerText()
+  ).trim();
+  expect(firstToken.length).toBeGreaterThan(0);
+
+  const filterInput = panel.getByPlaceholder('Filter token strings');
+  await filterInput.fill(firstToken);
+  await expect(tokenListItems).toHaveCount(1);
+  await expect(panel.locator('.jp-PluginPlayground-tokenString')).toHaveText([
+    firstToken
+  ]);
 });
