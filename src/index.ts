@@ -143,13 +143,7 @@ class PluginPlayground {
           });
         if (widget) {
           widget.content.ready.then(() => {
-            if (typeof widget.content.model.value !== 'undefined') {
-              // JupyterLab 3.x
-              widget.content.model.value.text = PLUGIN_TEMPLATE;
-            } else {
-              // JupyterLab 4.x
-              widget.content.model.sharedModel.setSource(PLUGIN_TEMPLATE);
-            }
+            widget.content.model.sharedModel.setSource(PLUGIN_TEMPLATE);
           });
         }
         return widget;
@@ -277,16 +271,16 @@ class PluginPlayground {
 
     // Unregister plugin if already registered.
     if (this.app.hasPlugin(plugin.id)) {
-      delete (this.app as any)._pluginMap[plugin.id];
+      this.app.deregisterPlugin(plugin.id, true);
     }
-    (this.app as any).registerPluginModule(plugin);
+    this.app.registerPlugin(plugin);
     if (plugin.autoStart) {
       try {
         await this.app.activatePlugin(plugin.id);
       } catch (e) {
         showDialog({
           title: `Plugin autostart failed: ${(e as Error).message}`,
-          body: formatErrorWithResult(e, result)
+          body: formatErrorWithResult(e as Error, result)
         });
         return;
       }

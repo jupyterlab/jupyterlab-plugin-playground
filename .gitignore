@@ -1,10 +1,14 @@
 *.bundle.*
 lib/
 node_modules/
+ui-tests/node_modules/
+.yarn/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
 jupyterlab_plugin_playground/labextension
+ui-tests/playwright-report/
+ui-tests/test-results/
 
 # Created by https://www.gitignore.io/api/python
 # Edit at https://www.gitignore.io/?templates=python

@@ -3,14 +3,34 @@ import type { IModule } from './types';
 
 export function loadKnownModule(name: string): Promise<IModule | null> {
   switch (name) {
+    case '@codemirror/language':
+      return import('@codemirror/language') as any;
+    case '@codemirror/state':
+      return import('@codemirror/state') as any;
+    case '@codemirror/view':
+      return import('@codemirror/view') as any;
     case '@jupyter-widgets/base':
       return import('@jupyter-widgets/base') as any;
+    case '@jupyter/collaborative-drive':
+      return import('@jupyter/collaborative-drive') as any;
+    case '@jupyter/docprovider':
+      return import('@jupyter/docprovider') as any;
+    case '@jupyter/react-components':
+      return import('@jupyter/react-components') as any;
+    case '@jupyter/web-components':
+      return import('@jupyter/web-components') as any;
+    case '@jupyter/ydoc':
+      return import('@jupyter/ydoc') as any;
     case '@jupyterlab/application':
       return import('@jupyterlab/application') as any;
     case '@jupyterlab/apputils':
       return import('@jupyterlab/apputils') as any;
+    case '@jupyterlab/attachments':
+      return import('@jupyterlab/attachments') as any;
     case '@jupyterlab/cell-toolbar':
       return import('@jupyterlab/cell-toolbar') as any;
+    case '@jupyterlab/cells':
+      return import('@jupyterlab/cells') as any;
     case '@jupyterlab/codeeditor':
       return import('@jupyterlab/codeeditor') as any;
     case '@jupyterlab/codemirror':
@@ -21,12 +41,12 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@jupyterlab/console') as any;
     case '@jupyterlab/coreutils':
       return import('@jupyterlab/coreutils') as any;
+    case '@jupyterlab/csvviewer':
+      return import('@jupyterlab/csvviewer') as any;
     case '@jupyterlab/debugger':
       return import('@jupyterlab/debugger') as any;
     case '@jupyterlab/docmanager':
       return import('@jupyterlab/docmanager') as any;
-    case '@jupyterlab/docprovider':
-      return import('@jupyterlab/docprovider') as any;
     case '@jupyterlab/docregistry':
       return import('@jupyterlab/docregistry') as any;
     case '@jupyterlab/documentsearch':
@@ -37,6 +57,8 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@jupyterlab/filebrowser') as any;
     case '@jupyterlab/fileeditor':
       return import('@jupyterlab/fileeditor') as any;
+    case '@jupyterlab/htmlviewer':
+      return import('@jupyterlab/htmlviewer') as any;
     case '@jupyterlab/imageviewer':
       return import('@jupyterlab/imageviewer') as any;
     case '@jupyterlab/inspector':
@@ -45,26 +67,40 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@jupyterlab/launcher') as any;
     case '@jupyterlab/logconsole':
       return import('@jupyterlab/logconsole') as any;
+    case '@jupyterlab/lsp':
+      return import('@jupyterlab/lsp') as any;
     case '@jupyterlab/mainmenu':
       return import('@jupyterlab/mainmenu') as any;
     case '@jupyterlab/markdownviewer':
       return import('@jupyterlab/markdownviewer') as any;
+    case '@jupyterlab/mermaid':
+      return import('@jupyterlab/mermaid') as any;
+    case '@jupyterlab/metadataform':
+      return import('@jupyterlab/metadataform') as any;
+    case '@jupyterlab/nbformat':
+      return import('@jupyterlab/nbformat') as any;
     case '@jupyterlab/notebook':
       return import('@jupyterlab/notebook') as any;
+    case '@jupyterlab/observables':
+      return import('@jupyterlab/observables') as any;
     case '@jupyterlab/outputarea':
       return import('@jupyterlab/outputarea') as any;
+    case '@jupyterlab/pluginmanager':
+      return import('@jupyterlab/pluginmanager') as any;
+    case '@jupyterlab/property-inspector':
+      return import('@jupyterlab/property-inspector') as any;
     case '@jupyterlab/rendermime':
       return import('@jupyterlab/rendermime') as any;
     case '@jupyterlab/rendermime-interfaces':
       return import('@jupyterlab/rendermime-interfaces') as any;
+    case '@jupyterlab/running':
+      return import('@jupyterlab/running') as any;
     case '@jupyterlab/services':
       return import('@jupyterlab/services') as any;
     case '@jupyterlab/settingeditor':
       return import('@jupyterlab/settingeditor') as any;
     case '@jupyterlab/settingregistry':
       return import('@jupyterlab/settingregistry') as any;
-    case '@jupyterlab/shared-models':
-      return import('@jupyterlab/shared-models') as any;
     case '@jupyterlab/statedb':
       return import('@jupyterlab/statedb') as any;
     case '@jupyterlab/statusbar':
@@ -79,6 +115,12 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@jupyterlab/translation') as any;
     case '@jupyterlab/ui-components':
       return import('@jupyterlab/ui-components') as any;
+    case '@jupyterlab/workspaces':
+      return import('@jupyterlab/workspaces') as any;
+    case '@lezer/common':
+      return import('@lezer/common') as any;
+    case '@lezer/highlight':
+      return import('@lezer/highlight') as any;
     case '@lumino/algorithm':
       return import('@lumino/algorithm') as any;
     case '@lumino/application':
@@ -95,8 +137,12 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@lumino/domutils') as any;
     case '@lumino/dragdrop':
       return import('@lumino/dragdrop') as any;
+    case '@lumino/keyboard':
+      return import('@lumino/keyboard') as any;
     case '@lumino/messaging':
       return import('@lumino/messaging') as any;
+    case '@lumino/polling':
+      return import('@lumino/polling') as any;
     case '@lumino/properties':
       return import('@lumino/properties') as any;
     case '@lumino/signaling':
