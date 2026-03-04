@@ -37,6 +37,10 @@ import { ImportResolver } from './resolver';
 
 import { IRequireJS, RequireJSLoader } from './requirejs';
 
+import { TokenSidebar } from './token-sidebar';
+
+import { Token } from '@lumino/coreutils';
+
 namespace CommandIDs {
   export const createNewFile = 'plugin-playground:create-new-plugin';
   export const loadCurrentAsExtension = 'plugin-playground:load-as-extension';
@@ -64,7 +68,28 @@ const plugin: JupyterFrontEndPlugin<void> = {
 export default plugin;
 `;
 
+interface IPrivateServiceStore {
+  _serviceMap?: Map<Token<string>, string>;
+  _services?: Map<Token<string>, string>;
+  _delegate?: IPrivateServiceStore | null;
+  pluginRegistry?: IPrivatePluginRegistry | null;
+}
+
+interface IPrivatePluginRegistry {
+  _services?: Map<Token<string>, string>;
+  _plugins?: Map<string, IPrivatePluginData>;
+}
+
+interface IPrivatePluginData {
+  provides?: Token<string> | null;
+  requires?: Token<string>[];
+  optional?: Token<string>[];
+}
+
 class PluginPlayground {
+  private _tokenSidebar: TokenSidebar | null = null;
+  private readonly _tokenMap = new Map<string, Token<string>>();
+
   constructor(
     protected app: JupyterFrontEnd,
     protected settingRegistry: ISettingRegistry,
@@ -134,6 +159,24 @@ class PluginPlayground {
     app.restored.then(async () => {
       const settings = this.settings;
       this._updateSettings(requirejs, settings);
+      try {
+        this._populateTokenMap();
+      } catch (error) {
+        console.warn(
+          'Failed to discover token names for the playground sidebar',
+          error
+        );
+      }
+      const tokenNames = Array.from(this._tokenMap.keys()).sort((a, b) =>
+        a.localeCompare(b)
+      );
+      this._tokenSidebar = new TokenSidebar(tokenNames);
+      this._tokenSidebar.id = 'jp-plugin-token-sidebar';
+      this._tokenSidebar.title.label = 'Service Tokens';
+      this._tokenSidebar.title.caption =
+        'Available service token strings for plugin';
+      this._tokenSidebar.title.icon = extensionIcon;
+      this.app.shell.add(this._tokenSidebar, 'left', { rank: 650 });
       // add to the launcher
       if (launcher && (settings.composite.showIconInLauncher as boolean)) {
         launcher.add({
@@ -169,24 +212,12 @@ class PluginPlayground {
   }
 
   private async _loadPlugin(code: string, path: string | null) {
-    const app = this.app as any;
-    // `_serviceMap` in Lumino 1.x (JupyterLab 3.x), `_services` in Lumino 2.x (JupyterLab 4.0)
-    const serviceTokens =
-      typeof app._serviceMap !== 'undefined'
-        ? app._serviceMap.keys()
-        : app._services.keys();
-
-    const tokenMap = new Map(
-      Array.from(serviceTokens).map((t: any) => [t.name, t])
-    );
-    // Widget registry does not follow convention of importName:tokenName
-    tokenMap.set(
-      '@jupyter-widgets/base:IJupyterWidgetRegistry',
-      tokenMap.get('jupyter.extensions.jupyterWidgetRegistry')
-    );
+    if (this._tokenMap.size === 0) {
+      this._populateTokenMap();
+    }
     const importResolver = new ImportResolver({
       loadKnownModule: loadKnownModule,
-      tokenMap: tokenMap,
+      tokenMap: this._tokenMap,
       requirejs: this.requirejs,
       settings: this.settings,
       serviceManager: this.app.serviceManager,
@@ -201,7 +232,7 @@ class PluginPlayground {
         }
       }),
       importFunction: importResolver.resolve.bind(importResolver),
-      tokenMap: tokenMap,
+      tokenMap: this._tokenMap,
       serviceManager: this.app.serviceManager,
       requirejs: this.requirejs
     });
@@ -266,6 +297,66 @@ class PluginPlayground {
     const response = await fetch(url);
     const jsBody = await response.text();
     this._loadPlugin(jsBody, null);
+  }
+
+  private _populateTokenMap(): void {
+    const app = this.app as unknown as IPrivateServiceStore;
+    this._tokenMap.clear();
+
+    const tokenMaps: Array<Map<Token<string>, string> | undefined> = [
+      // Lumino 1.x
+      app._serviceMap,
+      // Some Lumino 2.x builds
+      app._services,
+      app._delegate?._serviceMap,
+      app._delegate?._services,
+      // Lumino 2.x plugin registry (JupyterLab 4.x)
+      app.pluginRegistry?._services,
+      app._delegate?.pluginRegistry?._services
+    ];
+
+    for (const tokenMap of tokenMaps) {
+      if (!tokenMap) {
+        continue;
+      }
+      for (const token of tokenMap.keys()) {
+        this._tokenMap.set(token.name, token);
+      }
+    }
+
+    if (this._tokenMap.size === 0) {
+      const pluginMaps = [
+        app.pluginRegistry?._plugins,
+        app._delegate?.pluginRegistry?._plugins
+      ];
+      for (const pluginMap of pluginMaps) {
+        if (!pluginMap) {
+          continue;
+        }
+        for (const pluginData of pluginMap.values()) {
+          if (pluginData.provides) {
+            this._tokenMap.set(pluginData.provides.name, pluginData.provides);
+          }
+          for (const token of pluginData.requires ?? []) {
+            this._tokenMap.set(token.name, token);
+          }
+          for (const token of pluginData.optional ?? []) {
+            this._tokenMap.set(token.name, token);
+          }
+        }
+      }
+    }
+
+    // Widget registry does not follow convention of importName:tokenName
+    const widgetRegistryToken = this._tokenMap.get(
+      'jupyter.extensions.jupyterWidgetRegistry'
+    );
+    if (widgetRegistryToken) {
+      this._tokenMap.set(
+        '@jupyter-widgets/base:IJupyterWidgetRegistry',
+        widgetRegistryToken
+      );
+    }
   }
 }
 
