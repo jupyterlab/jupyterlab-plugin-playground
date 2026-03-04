@@ -116,10 +116,18 @@ test('opens token sidebar, shows tokens, and filters by exact token', async ({
   await page.goto();
   const tokenSidebarTab = page.sidebar.getTabLocator(TOKEN_SIDEBAR_ID);
   await expect(tokenSidebarTab).toBeVisible();
-  await page.sidebar.openTab(TOKEN_SIDEBAR_ID);
+  await page.sidebar.open('right');
+  await tokenSidebarTab.click();
+  await page.waitForFunction((id: string) => {
+    const activePanel = document.querySelector(
+      '#jp-right-stack .lm-StackedPanel-child:not(.lm-mod-hidden)'
+    );
+    return activePanel?.id === id;
+  }, TOKEN_SIDEBAR_ID);
 
-  const panel = page.locator(`#${TOKEN_SIDEBAR_ID}`);
+  const panel = page.sidebar.getContentPanelLocator('right');
   await expect(panel).toBeVisible();
+  await expect(panel).toHaveAttribute('id', TOKEN_SIDEBAR_ID);
 
   const tokenListItems = panel.locator('.jp-PluginPlayground-tokenListItem');
   await expect(tokenListItems.first()).toBeVisible();

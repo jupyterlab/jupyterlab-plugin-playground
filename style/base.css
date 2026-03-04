@@ -64,7 +64,13 @@
   overflow-wrap: anywhere;
 }
 
-.jp-PluginPlayground-copyButton {
+.jp-PluginPlayground-tokenActions {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.jp-PluginPlayground-copyButton,
+.jp-PluginPlayground-importButton {
   align-items: center;
   background: var(--jp-layout-color2);
   border: var(--jp-border-width) solid var(--jp-border-color1);
@@ -79,16 +85,25 @@
   justify-content: center;
 }
 
-.jp-PluginPlayground-copyButton:hover {
+.jp-PluginPlayground-copyButton:hover,
+.jp-PluginPlayground-importButton:hover {
   background: var(--jp-layout-color3);
 }
 
-.jp-PluginPlayground-copyButton:focus-visible {
+.jp-PluginPlayground-copyButton:focus-visible,
+.jp-PluginPlayground-importButton:focus-visible {
   outline: var(--jp-border-width) solid var(--jp-brand-color1);
   outline-offset: 1px;
 }
 
-.jp-PluginPlayground-copyIcon {
+.jp-PluginPlayground-actionIcon {
   height: 14px;
   width: 14px;
+}
+
+.jp-PluginPlayground-tokenDescription {
+  color: var(--jp-ui-font-color2);
+  font-size: var(--jp-ui-font-size0);
+  margin: 8px 0 0;
+  white-space: pre-wrap;
 }
