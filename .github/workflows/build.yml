@@ -119,7 +119,6 @@ jobs:
       working-directory: ui-tests
       run: |
         set -eux
-        jlpm playwright install-deps
         jlpm playwright install chromium
 
     - name: Execute integration tests

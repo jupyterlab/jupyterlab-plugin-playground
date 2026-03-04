@@ -1,4 +1,4 @@
-import { expect, test, type IJupyterLabPageFixture } from '@jupyterlab/galata';
+import { expect, test } from '@jupyterlab/galata';
 
 const LOAD_COMMAND = 'plugin-playground:load-as-extension';
 const CREATE_FILE_COMMAND = 'plugin-playground:create-new-plugin';
@@ -7,34 +7,6 @@ const TEST_TOGGLE_COMMAND = 'playground-integration-test:toggle';
 const TEST_FILE = 'playground-integration-test.ts';
 
 test.use({ autoGoto: false });
-
-const hasCommand = (page: IJupyterLabPageFixture, commandId: string) =>
-  page.evaluate((id: string) => {
-    const w = window as any;
-    const app = w.jupyterapp ?? w.galata?.app;
-    return Boolean(app?.commands?.hasCommand(id));
-  }, commandId);
-
-const executeCommand = (page: IJupyterLabPageFixture, commandId: string) =>
-  page.evaluate((id: string) => {
-    const w = window as any;
-    const app = w.jupyterapp ?? w.galata?.app;
-    return app.commands.execute(id);
-  }, commandId);
-
-const hasPlugin = (page: IJupyterLabPageFixture, pluginId: string) =>
-  page.evaluate((id: string) => {
-    const w = window as any;
-    const app = w.jupyterapp ?? w.galata?.app;
-    return Boolean(app?.hasPlugin?.(id));
-  }, pluginId);
-
-const isToggled = (page: IJupyterLabPageFixture, commandId: string) =>
-  page.evaluate((id: string) => {
-    const w = window as any;
-    const app = w.jupyterapp ?? w.galata?.app;
-    return Boolean(app?.commands?.isToggled(id));
-  }, commandId);
 
 const TEST_PLUGIN_SOURCE = `
 const plugin = {
@@ -58,8 +30,29 @@ export default plugin;
 test('registers plugin playground commands', async ({ page }) => {
   await page.goto();
 
-  await expect.poll(() => hasCommand(page, LOAD_COMMAND)).toBe(true);
-  await expect.poll(() => hasCommand(page, CREATE_FILE_COMMAND)).toBe(true);
+  await page.waitForCondition(() =>
+    page.evaluate((id: string) => {
+      return window.jupyterapp.commands.hasCommand(id);
+    }, LOAD_COMMAND)
+  );
+
+  await page.waitForCondition(() =>
+    page.evaluate((id: string) => {
+      return window.jupyterapp.commands.hasCommand(id);
+    }, CREATE_FILE_COMMAND)
+  );
+
+  await expect(
+    page.evaluate((id: string) => {
+      return window.jupyterapp.commands.hasCommand(id);
+    }, LOAD_COMMAND)
+  ).resolves.toBe(true);
+
+  await expect(
+    page.evaluate((id: string) => {
+      return window.jupyterapp.commands.hasCommand(id);
+    }, CREATE_FILE_COMMAND)
+  ).resolves.toBe(true);
 });
 
 test('loads current editor file as a plugin extension', async ({
@@ -72,19 +65,46 @@ test('loads current editor file as a plugin extension', async ({
   await page.goto();
 
   await page.filebrowser.open(pluginPath);
-  await page.locator('.jp-FileEditor').first().click();
+  expect(await page.activity.activateTab(TEST_FILE)).toBe(true);
 
-  await expect.poll(() => hasCommand(page, LOAD_COMMAND)).toBe(true);
-  await executeCommand(page, LOAD_COMMAND);
+  await page.waitForCondition(() =>
+    page.evaluate((id: string) => {
+      return window.jupyterapp.commands.hasCommand(id);
+    }, LOAD_COMMAND)
+  );
+  await page.evaluate((id: string) => {
+    return window.jupyterapp.commands.execute(id);
+  }, LOAD_COMMAND);
 
-  await expect.poll(() => hasPlugin(page, TEST_PLUGIN_ID)).toBe(true);
+  await page.waitForCondition(() =>
+    page.evaluate((id: string) => {
+      return window.jupyterapp.hasPlugin(id);
+    }, TEST_PLUGIN_ID)
+  );
 
-  await expect.poll(() => hasCommand(page, TEST_TOGGLE_COMMAND)).toBe(true);
+  await page.waitForCondition(() =>
+    page.evaluate((id: string) => {
+      return window.jupyterapp.commands.hasCommand(id);
+    }, TEST_TOGGLE_COMMAND)
+  );
 
-  const initiallyToggled = await isToggled(page, TEST_TOGGLE_COMMAND);
+  const initiallyToggled = await page.evaluate((id: string) => {
+    return window.jupyterapp.commands.isToggled(id);
+  }, TEST_TOGGLE_COMMAND);
   expect(initiallyToggled).toBe(false);
 
-  await executeCommand(page, TEST_TOGGLE_COMMAND);
+  await page.evaluate((id: string) => {
+    return window.jupyterapp.commands.execute(id);
+  }, TEST_TOGGLE_COMMAND);
 
-  await expect.poll(() => isToggled(page, TEST_TOGGLE_COMMAND)).toBe(true);
+  await page.waitForCondition(() =>
+    page.evaluate((id: string) => {
+      return window.jupyterapp.commands.isToggled(id);
+    }, TEST_TOGGLE_COMMAND)
+  );
+  await expect(
+    page.evaluate((id: string) => {
+      return window.jupyterapp.commands.isToggled(id);
+    }, TEST_TOGGLE_COMMAND)
+  ).resolves.toBe(true);
 });
