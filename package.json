@@ -7,9 +7,9 @@
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/jupyterlab/jupyterlab-plugin-playground",
+  "homepage": "https://github.com/jupyterlab/plugin-playground",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyterlab-plugin-playground/issues"
+    "url": "https://github.com/jupyterlab/plugin-playground/issues"
   },
   "license": "BSD-3-Clause",
   "author": {
@@ -26,7 +26,7 @@
   "style": "style/index.css",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyterlab-plugin-playground.git"
+    "url": "https://github.com/jupyterlab/plugin-playground.git"
   },
   "packageManager": "yarn@3.5.0",
   "scripts": {
