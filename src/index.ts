@@ -223,7 +223,14 @@ class PluginPlayground {
 
   private async _loadPlugin(code: string, path: string | null) {
     if (this._tokenMap.size === 0) {
-      this._populateTokenMap();
+      try {
+        this._populateTokenMap();
+      } catch (error) {
+        console.warn(
+          'Failed to discover token names while loading plugin',
+          error
+        );
+      }
     }
     const importResolver = new ImportResolver({
       loadKnownModule: loadKnownModule,

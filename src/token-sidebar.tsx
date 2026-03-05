@@ -165,12 +165,15 @@ export class TokenSidebar extends ReactWidget {
 
   private _canInsertImport(tokenName: string): boolean {
     const separatorIndex = tokenName.indexOf(':');
-    if (separatorIndex === -1) {
+    if (separatorIndex <= 0) {
       return false;
     }
+    const packageName = tokenName.slice(0, separatorIndex).trim();
     const tokenSymbol = tokenName.slice(separatorIndex + 1).trim();
     return (
-      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(tokenSymbol) && this._isImportEnabled()
+      packageName.length > 0 &&
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(tokenSymbol) &&
+      this._isImportEnabled()
     );
   }
 
