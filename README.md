@@ -18,6 +18,8 @@ pip install jupyterlab-plugin-playground
 
 This extension provides a new command, `Load Current File As Extension`, available in the text editor.
 
+It also adds a right sidebar panel listing token string IDs you can use in plugin `requires` and `optional` arrays, with search, copy, and import actions.
+
 As an example, open the text editor by creating a new text file and paste this small JupyterLab plugin into it. This plugin will create a simple command `My Super Cool Toggle` in the command palette that can be toggled on and off.
 
 ```typescript

@@ -8,6 +8,7 @@ import {
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import {
+  Dialog,
   showDialog,
   showErrorMessage,
   ICommandPalette
@@ -37,6 +38,12 @@ import { ImportResolver } from './resolver';
 
 import { IRequireJS, RequireJSLoader } from './requirejs';
 
+import { TokenSidebar } from './token-sidebar';
+
+import { tokenSidebarIcon } from './icons';
+
+import { Token } from '@lumino/coreutils';
+
 namespace CommandIDs {
   export const createNewFile = 'plugin-playground:create-new-plugin';
   export const loadCurrentAsExtension = 'plugin-playground:load-as-extension';
@@ -64,12 +71,34 @@ const plugin: JupyterFrontEndPlugin<void> = {
 export default plugin;
 `;
 
+interface IPrivateServiceStore {
+  _serviceMap?: Map<Token<string>, string>;
+  _services?: Map<Token<string>, string>;
+  _delegate?: IPrivateServiceStore | null;
+  pluginRegistry?: IPrivatePluginRegistry | null;
+}
+
+interface IPrivatePluginRegistry {
+  _services?: Map<Token<string>, string>;
+  _plugins?: Map<string, IPrivatePluginData>;
+}
+
+interface IPrivatePluginData {
+  provides?: Token<string> | null;
+  requires?: Token<string>[];
+  optional?: Token<string>[];
+  description?: unknown;
+  plugin?: {
+    description?: unknown;
+  };
+}
+
 class PluginPlayground {
   constructor(
     protected app: JupyterFrontEnd,
     protected settingRegistry: ISettingRegistry,
     commandPalette: ICommandPalette,
-    editorTracker: IEditorTracker,
+    protected editorTracker: IEditorTracker,
     launcher: ILauncher | null,
     protected documentManager: IDocumentManager | null,
     protected settings: ISettingRegistry.ISettings,
@@ -128,6 +157,36 @@ class PluginPlayground {
     app.restored.then(async () => {
       const settings = this.settings;
       this._updateSettings(requirejs, settings);
+      try {
+        this._populateTokenMap();
+      } catch (error) {
+        console.warn(
+          'Failed to discover token names for the playground sidebar',
+          error
+        );
+      }
+      const tokenNames = Array.from(this._tokenMap.keys()).sort((a, b) =>
+        a.localeCompare(b)
+      );
+      const tokens = tokenNames.map(name => ({
+        name,
+        description: this._tokenDescriptionMap.get(name) ?? ''
+      }));
+      const tokenSidebar = new TokenSidebar({
+        tokens,
+        onInsertImport: this._insertTokenImport.bind(this),
+        isImportEnabled: this._canInsertImport.bind(this)
+      });
+      tokenSidebar.id = 'jp-plugin-token-sidebar';
+      tokenSidebar.title.caption = 'Available service token strings for plugin';
+      tokenSidebar.title.icon = tokenSidebarIcon;
+      this.app.shell.add(tokenSidebar, 'right', { rank: 650 });
+      app.shell.currentChanged?.connect(() => {
+        tokenSidebar.update();
+      });
+      editorTracker.currentChanged.connect(() => {
+        tokenSidebar.update();
+      });
       // add to the launcher
       if (launcher && (settings.composite.showIconInLauncher as boolean)) {
         launcher.add({
@@ -163,26 +222,19 @@ class PluginPlayground {
   }
 
   private async _loadPlugin(code: string, path: string | null) {
-    const app = this.app as any;
-    // Service registry location changed across Lumino/JupyterLab versions.
-    const serviceMap =
-      app._serviceMap ?? app._services ?? app.pluginRegistry?._services;
-    if (!serviceMap || typeof serviceMap.keys !== 'function') {
-      throw new Error('Could not access application service token map');
+    if (this._tokenMap.size === 0) {
+      try {
+        this._populateTokenMap();
+      } catch (error) {
+        console.warn(
+          'Failed to discover token names while loading plugin',
+          error
+        );
+      }
     }
-    const serviceTokens = serviceMap.keys();
-
-    const tokenMap = new Map(
-      Array.from(serviceTokens).map((t: any) => [t.name, t])
-    );
-    // Widget registry does not follow convention of importName:tokenName
-    tokenMap.set(
-      '@jupyter-widgets/base:IJupyterWidgetRegistry',
-      tokenMap.get('jupyter.extensions.jupyterWidgetRegistry')
-    );
     const importResolver = new ImportResolver({
       loadKnownModule: loadKnownModule,
-      tokenMap: tokenMap,
+      tokenMap: this._tokenMap,
       requirejs: this.requirejs,
       settings: this.settings,
       serviceManager: this.app.serviceManager,
@@ -197,7 +249,7 @@ class PluginPlayground {
         }
       }),
       importFunction: importResolver.resolve.bind(importResolver),
-      tokenMap: tokenMap,
+      tokenMap: this._tokenMap,
       serviceManager: this.app.serviceManager,
       requirejs: this.requirejs
     });
@@ -263,6 +315,181 @@ class PluginPlayground {
     const jsBody = await response.text();
     this._loadPlugin(jsBody, null);
   }
+
+  private _populateTokenMap(): void {
+    const app = this.app as unknown as IPrivateServiceStore;
+    this._tokenMap.clear();
+    this._tokenDescriptionMap.clear();
+
+    const tokenMaps: Array<Map<Token<string>, string> | undefined> = [
+      // Lumino 1.x
+      app._serviceMap,
+      // Some Lumino 2.x builds
+      app._services,
+      app._delegate?._serviceMap,
+      app._delegate?._services,
+      // Lumino 2.x plugin registry (JupyterLab 4.x)
+      app.pluginRegistry?._services,
+      app._delegate?.pluginRegistry?._services
+    ];
+    const pluginMaps = [
+      app.pluginRegistry?._plugins,
+      app._delegate?.pluginRegistry?._plugins
+    ];
+    const pluginDescriptions = new Map<string, string>();
+    for (const pluginMap of pluginMaps) {
+      if (!pluginMap) {
+        continue;
+      }
+      for (const [pluginId, pluginData] of pluginMap.entries()) {
+        const description =
+          this._stringValue(pluginData.description) ||
+          this._stringValue(pluginData.plugin?.description);
+        if (description) {
+          pluginDescriptions.set(pluginId, description);
+        }
+      }
+    }
+
+    for (const tokenMap of tokenMaps) {
+      if (!tokenMap) {
+        continue;
+      }
+      for (const [token, pluginId] of tokenMap.entries()) {
+        this._setToken(token, pluginDescriptions.get(pluginId) ?? '');
+      }
+    }
+
+    if (this._tokenMap.size === 0) {
+      for (const pluginMap of pluginMaps) {
+        if (!pluginMap) {
+          continue;
+        }
+        for (const [pluginId, pluginData] of pluginMap.entries()) {
+          const pluginDescription =
+            pluginDescriptions.get(pluginId) ||
+            this._stringValue(pluginData.description) ||
+            this._stringValue(pluginData.plugin?.description);
+          if (pluginData.provides) {
+            this._setToken(pluginData.provides, pluginDescription);
+          }
+          for (const token of pluginData.requires ?? []) {
+            this._setToken(token, pluginDescription);
+          }
+          for (const token of pluginData.optional ?? []) {
+            this._setToken(token, pluginDescription);
+          }
+        }
+      }
+    }
+
+    // Widget registry does not follow convention of importName:tokenName
+    const widgetRegistryToken = this._tokenMap.get(
+      'jupyter.extensions.jupyterWidgetRegistry'
+    );
+    if (widgetRegistryToken) {
+      this._tokenMap.set(
+        '@jupyter-widgets/base:IJupyterWidgetRegistry',
+        widgetRegistryToken
+      );
+      const widgetRegistryDescription =
+        this._tokenDescriptionMap.get(
+          'jupyter.extensions.jupyterWidgetRegistry'
+        ) ?? '';
+      if (widgetRegistryDescription) {
+        this._tokenDescriptionMap.set(
+          '@jupyter-widgets/base:IJupyterWidgetRegistry',
+          widgetRegistryDescription
+        );
+      }
+    }
+  }
+
+  private _setToken(token: Token<string>, fallbackDescription: string): void {
+    this._tokenMap.set(token.name, token);
+    const tokenDescription = this._stringValue(
+      (token as Token<string> & { description?: unknown }).description
+    );
+    const description = tokenDescription || fallbackDescription;
+    if (description) {
+      this._tokenDescriptionMap.set(token.name, description);
+    }
+  }
+
+  private _stringValue(description: unknown): string {
+    if (typeof description !== 'string') {
+      return '';
+    }
+    return description.trim();
+  }
+
+  private async _insertTokenImport(tokenName: string): Promise<void> {
+    const statement = this._importStatement(tokenName);
+    if (!statement) {
+      await showDialog({
+        title: 'Cannot generate import statement',
+        body: `Token "${tokenName}" does not follow the package:token format.`,
+        buttons: [Dialog.okButton()]
+      });
+      return;
+    }
+
+    const editorWidget = this.editorTracker.currentWidget;
+    if (!editorWidget) {
+      await showDialog({
+        title: 'No active editor',
+        body: 'Open a text editor tab to insert an import statement.',
+        buttons: [Dialog.okButton()]
+      });
+      return;
+    }
+
+    const sourceModel = editorWidget.content.model;
+    if (!sourceModel || !sourceModel.sharedModel) {
+      await showDialog({
+        title: 'No editable content',
+        body: 'The active tab does not expose editable source text.',
+        buttons: [Dialog.okButton()]
+      });
+      return;
+    }
+
+    const source = sourceModel.sharedModel.getSource();
+    if (source.includes(statement)) {
+      return;
+    }
+    const separator = source.length > 0 ? '\n' : '';
+    sourceModel.sharedModel.setSource(`${statement}${separator}${source}`);
+  }
+
+  private _importStatement(tokenName: string): string | null {
+    const separatorIndex = tokenName.indexOf(':');
+    if (separatorIndex === -1) {
+      return null;
+    }
+    const packageName = tokenName.slice(0, separatorIndex).trim();
+    const tokenSymbol = tokenName.slice(separatorIndex + 1).trim();
+    if (!packageName || !tokenSymbol) {
+      return null;
+    }
+    if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(tokenSymbol)) {
+      return null;
+    }
+    return `import { ${tokenSymbol} } from '${packageName}';`;
+  }
+
+  private _canInsertImport(): boolean {
+    const editorWidget = this.editorTracker.currentWidget;
+    if (!editorWidget) {
+      return false;
+    }
+
+    const sourceModel = editorWidget.content.model;
+    return !!(sourceModel && sourceModel.sharedModel);
+  }
+
+  private readonly _tokenMap = new Map<string, Token<string>>();
+  private readonly _tokenDescriptionMap = new Map<string, string>();
 }
 
 /**

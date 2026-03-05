@@ -1,10 +1,14 @@
 import { expect, test } from '@jupyterlab/galata';
+import type { FileEditorWidget } from '@jupyterlab/fileeditor';
+import type { IJupyterLabPageFixture } from '@jupyterlab/galata';
+import type { Locator } from '@playwright/test';
 
 const LOAD_COMMAND = 'plugin-playground:load-as-extension';
 const CREATE_FILE_COMMAND = 'plugin-playground:create-new-plugin';
 const TEST_PLUGIN_ID = 'playground-integration-test:plugin';
 const TEST_TOGGLE_COMMAND = 'playground-integration-test:toggle';
 const TEST_FILE = 'playground-integration-test.ts';
+const TOKEN_SIDEBAR_ID = 'jp-plugin-token-sidebar';
 
 test.use({ autoGoto: false });
 
@@ -26,6 +30,41 @@ const plugin = {
 
 export default plugin;
 `;
+
+async function openTokenSidebarPanel(
+  page: IJupyterLabPageFixture
+): Promise<Locator> {
+  const tokenSidebarTab = page.sidebar.getTabLocator(TOKEN_SIDEBAR_ID);
+  await expect(tokenSidebarTab).toBeVisible();
+  await page.sidebar.openTab(TOKEN_SIDEBAR_ID);
+
+  const sidebarSide = await page.sidebar.getTabPosition(TOKEN_SIDEBAR_ID);
+  const panel = page.sidebar.getContentPanelLocator(sidebarSide ?? 'right');
+  await expect(panel).toBeVisible();
+  await expect(panel).toHaveAttribute('id', TOKEN_SIDEBAR_ID);
+  return panel;
+}
+
+async function findImportableToken(panel: Locator): Promise<string> {
+  const tokenEntries = panel.locator('.jp-PluginPlayground-tokenString');
+  const count = await tokenEntries.count();
+  for (let i = 0; i < count; i++) {
+    const tokenName = (await tokenEntries.nth(i).innerText()).trim();
+    const separatorIndex = tokenName.indexOf(':');
+    if (separatorIndex <= 0) {
+      continue;
+    }
+    const packageName = tokenName.slice(0, separatorIndex).trim();
+    const tokenSymbol = tokenName.slice(separatorIndex + 1).trim();
+    if (
+      packageName.length > 0 &&
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(tokenSymbol)
+    ) {
+      return tokenName;
+    }
+  }
+  throw new Error('No importable token found in token sidebar');
+}
 
 test('registers plugin playground commands', async ({ page }) => {
   await page.goto();
@@ -107,4 +146,97 @@ test('loads current editor file as a plugin extension', async ({
       return window.jupyterapp.commands.isToggled(id);
     }, TEST_TOGGLE_COMMAND)
   ).resolves.toBe(true);
+});
+
+test('opens token sidebar, shows tokens, and filters by exact token', async ({
+  page
+}) => {
+  await page.goto();
+  const panel = await openTokenSidebarPanel(page);
+
+  const tokenListItems = panel.locator('.jp-PluginPlayground-tokenListItem');
+  await expect(tokenListItems.first()).toBeVisible();
+  expect(await tokenListItems.count()).toBeGreaterThan(0);
+
+  const firstToken = (
+    await panel.locator('.jp-PluginPlayground-tokenString').first().innerText()
+  ).trim();
+  expect(firstToken.length).toBeGreaterThan(0);
+
+  const filterInput = panel.getByPlaceholder('Filter token strings');
+  await filterInput.fill(firstToken);
+  await expect(tokenListItems).toHaveCount(1);
+  await expect(panel.locator('.jp-PluginPlayground-tokenString')).toHaveText([
+    firstToken
+  ]);
+});
+
+test('token sidebar copy button shows copied state', async ({ page }) => {
+  await page.goto();
+  const panel = await openTokenSidebarPanel(page);
+
+  const tokenListItem = panel.locator('.jp-PluginPlayground-tokenListItem');
+  await expect(tokenListItem.first()).toBeVisible();
+
+  const copyButton = tokenListItem
+    .first()
+    .locator('.jp-PluginPlayground-copyButton');
+  await expect(copyButton).toHaveAttribute('title', 'Copy token string');
+  await copyButton.click();
+  await expect(copyButton).toHaveAttribute('title', 'Copied');
+});
+
+test('token sidebar inserts import statement into active editor', async ({
+  page,
+  tmpPath
+}) => {
+  const editorPath = `${tmpPath}/token-sidebar-import.ts`;
+
+  await page.contents.uploadContent(
+    "const pluginId = 'token-sidebar-test';\n",
+    'text',
+    editorPath
+  );
+  await page.goto();
+  await page.filebrowser.open(editorPath);
+  expect(await page.activity.activateTab('token-sidebar-import.ts')).toBe(true);
+
+  const panel = await openTokenSidebarPanel(page);
+  const tokenName = await findImportableToken(panel);
+  const filterInput = panel.getByPlaceholder('Filter token strings');
+  await filterInput.fill(tokenName);
+  const tokenListItem = panel.locator('.jp-PluginPlayground-tokenListItem');
+  await expect(tokenListItem).toHaveCount(1);
+
+  const importButton = tokenListItem.locator(
+    '.jp-PluginPlayground-importButton'
+  );
+  await expect(importButton).toBeEnabled();
+  await importButton.click();
+
+  const separatorIndex = tokenName.indexOf(':');
+  const packageName = tokenName.slice(0, separatorIndex).trim();
+  const tokenSymbol = tokenName.slice(separatorIndex + 1).trim();
+  const expectedImport = `import { ${tokenSymbol} } from '${packageName}';`;
+
+  await page.waitForFunction((expected: string) => {
+    const current = window.jupyterapp.shell
+      .currentWidget as FileEditorWidget | null;
+    const source = current?.content.model.sharedModel.getSource();
+    if (typeof source !== 'string') {
+      return false;
+    }
+    return source.startsWith(expected);
+  }, expectedImport);
+
+  await importButton.click();
+  await page.waitForFunction((expected: string) => {
+    const current = window.jupyterapp.shell
+      .currentWidget as FileEditorWidget | null;
+    const source = current?.content.model.sharedModel.getSource();
+    if (typeof source !== 'string') {
+      return false;
+    }
+    return source.split(expected).length - 1 === 1;
+  }, expectedImport);
 });

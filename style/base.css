@@ -3,3 +3,117 @@
 
     https://jupyterlab.readthedocs.io/en/stable/developer/css.html
 */
+
+.jp-PluginPlayground-tokenSidebar {
+  background: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color1);
+  height: 100%;
+}
+
+.jp-PluginPlayground-tokenSidebarInner {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--jp-layout-spacing-standard);
+  height: 100%;
+  overflow: auto;
+  padding: var(--jp-code-padding);
+}
+
+.jp-PluginPlayground-tokenCount {
+  color: var(--jp-ui-font-color2);
+  font-size: var(--jp-ui-font-size0);
+  margin: 5px 0px;
+}
+
+.jp-PluginPlayground-tokenFilter {
+  background: var(--jp-layout-color1);
+  border: var(--jp-border-width) solid var(--jp-border-color1);
+  border-radius: var(--jp-border-radius);
+  color: var(--jp-ui-font-color1);
+  font-size: var(--jp-ui-font-size1);
+  padding: 4px 8px;
+}
+
+.jp-PluginPlayground-tokenList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jp-layout-spacing-standard);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.jp-PluginPlayground-tokenListItem {
+  border: var(--jp-border-width) solid var(--jp-border-color2);
+  border-radius: var(--jp-border-radius);
+  margin: 0;
+  padding: 8px;
+}
+
+.jp-PluginPlayground-tokenRow {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.jp-PluginPlayground-tokenString {
+  display: block;
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+}
+
+.jp-PluginPlayground-tokenActions {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.jp-PluginPlayground-copyButton,
+.jp-PluginPlayground-importButton {
+  align-items: center;
+  background: var(--jp-layout-color2);
+  border: var(--jp-border-width) solid var(--jp-border-color1);
+  border-radius: var(--jp-border-radius);
+  color: var(--jp-ui-font-color1);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: var(--jp-ui-font-size0);
+  gap: 4px;
+  line-height: 1;
+  padding: 2px 6px;
+  justify-content: center;
+}
+
+.jp-PluginPlayground-copyButton:hover,
+.jp-PluginPlayground-importButton:hover {
+  background: var(--jp-layout-color3);
+}
+
+.jp-PluginPlayground-copyButton:focus-visible,
+.jp-PluginPlayground-importButton:focus-visible {
+  outline: var(--jp-border-width) solid var(--jp-brand-color1);
+  outline-offset: 1px;
+}
+
+.jp-PluginPlayground-actionIcon {
+  align-items: center;
+  display: inline-flex;
+  height: 14px;
+  justify-content: center;
+  width: 14px;
+}
+
+.jp-PluginPlayground-actionIcon svg {
+  display: block;
+  height: 14px;
+  width: 14px;
+}
+
+.jp-PluginPlayground-tokenDescription {
+  color: var(--jp-ui-font-color2);
+  font-size: var(--jp-ui-font-size0);
+  margin: 8px 0 0;
+  white-space: normal;
+}
