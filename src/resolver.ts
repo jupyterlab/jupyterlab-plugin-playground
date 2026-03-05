@@ -104,7 +104,6 @@ export class ImportResolver {
           }
           const tokenName = `${module}:${prop}`;
           if (this._options.tokenMap.has(tokenName)) {
-            // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
             return this._options.tokenMap.get(tokenName)!;
           }
           // synthetic default import (without proxy)

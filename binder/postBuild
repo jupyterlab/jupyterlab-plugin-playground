@@ -11,6 +11,7 @@
 import shutil
 import subprocess
 import sys
+import json
 from pathlib import Path
 
 
@@ -43,14 +44,61 @@ _("jupyter", "server", "extension", "list")
 # initially list installed extensions to determine if there are any surprises
 _("jupyter", "labextension", "list")
 
-# install javascript language server for autocompletion and error highlighting
-# (typescript-language-server depends on tsutils which requires us to choose typescript version)
-_("jlpm", "add", "typescript-language-server", "typescript@4.1")
+# install JavaScript/TypeScript and ESLint language servers
+# (typescript-language-server uses workspace TypeScript from this extension project)
+_("jlpm", "add", "typescript-language-server", "vscode-langservers-extracted")
 
 # add overrides for LSP settings
 SETTINGS = Path(sys.prefix) / "share/jupyter/lab/settings"
 SETTINGS.mkdir(parents=True, exist_ok=True)
 shutil.copy2("binder/overrides.json", SETTINGS / "overrides.json")
+
+# configure ESLint language server for jupyter-lsp
+ESLINT_BIN = ROOT / "node_modules" / ".bin" / "vscode-eslint-language-server"
+if not ESLINT_BIN.exists():
+    print("ERROR could not locate", ESLINT_BIN)
+    sys.exit(1)
+
+SERVER_CONFIG = Path(sys.prefix) / "etc/jupyter/jupyter_server_config.d"
+SERVER_CONFIG.mkdir(parents=True, exist_ok=True)
+
+with (SERVER_CONFIG / "eslint-language-server.json").open("w", encoding="utf-8") as f:
+    json.dump(
+        {
+            "LanguageServerManager": {
+                "language_servers": {
+                    "vscode-eslint-language-server": {
+                        "version": 2,
+                        "argv": [str(ESLINT_BIN), "--stdio"],
+                        "display_name": "vscode-eslint-language-server",
+                        "requires_documents_on_disk": False,
+                        "languages": [
+                            "javascript",
+                            "javascriptreact",
+                            "jsx",
+                            "typescript",
+                            "typescript-jsx",
+                            "typescriptreact"
+                        ],
+                        "mime_types": [
+                            "application/javascript",
+                            "application/typescript",
+                            "application/x-javascript",
+                            "application/ecmascript",
+                            "text/javascript",
+                            "text/ecmascript",
+                            "text/jsx",
+                            "text/typescript",
+                            "text/typescript-jsx"
+                        ]
+                    }
+                }
+            }
+        },
+        f,
+        indent=2,
+        sort_keys=True
+    )
 
 # download examples
 _("git", "clone", "https://github.com/jupyterlab/extension-examples.git")
