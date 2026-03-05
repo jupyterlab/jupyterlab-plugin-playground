@@ -40,6 +40,8 @@ import { IRequireJS, RequireJSLoader } from './requirejs';
 
 import { TokenSidebar } from './token-sidebar';
 
+import { tokenSidebarIcon } from './icons';
+
 import { Token } from '@lumino/coreutils';
 
 namespace CommandIDs {
@@ -177,7 +179,7 @@ class PluginPlayground {
       });
       tokenSidebar.id = 'jp-plugin-token-sidebar';
       tokenSidebar.title.caption = 'Available service token strings for plugin';
-      tokenSidebar.title.icon = extensionIcon;
+      tokenSidebar.title.icon = tokenSidebarIcon;
       this.app.shell.add(tokenSidebar, 'right', { rank: 650 });
       app.shell.currentChanged?.connect(() => {
         tokenSidebar.update();
