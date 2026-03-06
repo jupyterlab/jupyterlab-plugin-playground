@@ -104,7 +104,7 @@ export class ImportResolver {
           }
           const tokenName = `${module}:${prop}`;
           if (this._options.tokenMap.has(tokenName)) {
-            return this._options.tokenMap.get(tokenName)!;
+            return this._options.tokenMap.get(tokenName);
           }
           // synthetic default import (without proxy)
           if (prop === 'default' && !(prop in target)) {
