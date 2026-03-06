@@ -18,9 +18,17 @@ pip install jupyterlab-plugin-playground
 
 This extension provides a new command, `Load Current File As Extension`, available in the text editor.
 
-It also adds a right sidebar panel listing token string IDs you can use in plugin `requires` and `optional` arrays, with search, copy, and import actions.
+It also adds a single right sidebar panel with two collapsible sections:
 
-It also adds a second right sidebar panel with discovered examples from a local clone of [`jupyterlab/extension-examples`](https://github.com/jupyterlab/extension-examples), so you can open them directly from the panel.
+- **Service Tokens**: token string IDs you can use in plugin `requires` and `optional` arrays, with search, copy, and import actions.
+- **Extension Examples**: discovered examples from a local checkout of [`jupyterlab/extension-examples`](https://github.com/jupyterlab/extension-examples), so you can open them directly from the panel.
+
+If examples are missing:
+
+- For source checkouts: run `git submodule update --init --recursive`.
+- For PyPI installs: clone `https://github.com/jupyterlab/extension-examples` into an `extension-examples/` folder in your working directory.
+
+When reloading a plugin with the same `id`, the playground attempts to deactivate the previously loaded plugin first. Defining `deactivate()` in examples is recommended for clean reruns.
 
 As an example, open the text editor by creating a new text file and paste this small JupyterLab plugin into it. This plugin will create a simple command `My Super Cool Toggle` in the command palette that can be toggled on and off.
 

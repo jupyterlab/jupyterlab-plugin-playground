@@ -80,10 +80,22 @@ export class ExampleSidebar extends ReactWidget {
         {!this._isLoading &&
         !this._errorMessage &&
         filteredExamples.length === 0 ? (
-          <p className="jp-PluginPlayground-count jp-PluginPlayground-exampleCount">
-            No extension examples found. Ensure the repository submodule is
-            initialized.
-          </p>
+          <div className="jp-PluginPlayground-emptyState">
+            <p className="jp-PluginPlayground-count jp-PluginPlayground-exampleCount">
+              No extension examples found in <code>extension-examples/</code>.
+            </p>
+            <p className="jp-PluginPlayground-count jp-PluginPlayground-exampleCount">
+              If this repository was cloned from source, run{' '}
+              <code>git submodule update --init --recursive</code> from the
+              project root.
+            </p>
+            <p className="jp-PluginPlayground-count jp-PluginPlayground-exampleCount">
+              If installed from PyPI, clone{' '}
+              <code>https://github.com/jupyterlab/extension-examples</code> as{' '}
+              <code>extension-examples/</code> in your working directory and
+              refresh JupyterLab.
+            </p>
+          </div>
         ) : null}
         {filteredExamples.length > 0 ? (
           <ul className="jp-PluginPlayground-list jp-PluginPlayground-exampleList">

@@ -22,7 +22,7 @@ import { FileEditor, IEditorTracker } from '@jupyterlab/fileeditor';
 
 import { ILauncher } from '@jupyterlab/launcher';
 
-import { extensionIcon } from '@jupyterlab/ui-components';
+import { extensionIcon, SidePanel } from '@jupyterlab/ui-components';
 
 import { IDocumentManager } from '@jupyterlab/docmanager';
 
@@ -47,6 +47,10 @@ import { ExampleSidebar } from './example-sidebar';
 import { tokenSidebarIcon, examplesSidebarIcon } from './icons';
 
 import { Token } from '@lumino/coreutils';
+
+import { AccordionPanel } from '@lumino/widgets';
+
+import { IPlugin } from '@lumino/application';
 
 namespace CommandIDs {
   export const createNewFile = 'plugin-playground:create-new-plugin';
@@ -194,19 +198,29 @@ class PluginPlayground {
         isImportEnabled: this._canInsertImport.bind(this)
       });
       tokenSidebar.id = 'jp-plugin-token-sidebar';
+      tokenSidebar.title.label = 'Service Tokens';
       tokenSidebar.title.caption = 'Available service token strings for plugin';
       tokenSidebar.title.icon = tokenSidebarIcon;
-      this.app.shell.add(tokenSidebar, 'right', { rank: 650 });
 
       const exampleSidebar = new ExampleSidebar({
         fetchExamples: this._discoverExtensionExamples.bind(this),
         onOpenExample: this._openExtensionExample.bind(this)
       });
       exampleSidebar.id = 'jp-plugin-example-sidebar';
+      exampleSidebar.title.label = 'Extension Examples';
       exampleSidebar.title.caption =
         'jupyterlab/extension-examples plugin entrypoints';
       exampleSidebar.title.icon = examplesSidebarIcon;
-      this.app.shell.add(exampleSidebar, 'right', { rank: 651 });
+
+      const playgroundSidebar = new SidePanel();
+      playgroundSidebar.id = 'jp-plugin-playground-sidebar';
+      playgroundSidebar.title.caption = 'Plugin Playground helper panels';
+      playgroundSidebar.title.icon = tokenSidebarIcon;
+      playgroundSidebar.addWidget(tokenSidebar);
+      playgroundSidebar.addWidget(exampleSidebar);
+      (playgroundSidebar.content as AccordionPanel).expand(0);
+      (playgroundSidebar.content as AccordionPanel).expand(1);
+      this.app.shell.add(playgroundSidebar, 'right', { rank: 650 });
 
       app.shell.currentChanged?.connect(() => {
         tokenSidebar.update();
@@ -297,7 +311,7 @@ class PluginPlayground {
       }
       return;
     }
-    const plugin = result.plugin;
+    const plugin = this._ensureDeactivateSupport(result.plugin);
 
     if (result.schema) {
       // TODO: this is mostly fine to get the menus and toolbars, but:
@@ -319,10 +333,7 @@ class PluginPlayground {
       ).emit(plugin.id);
     }
 
-    // Unregister plugin if already registered.
-    if (this.app.hasPlugin(plugin.id)) {
-      this.app.deregisterPlugin(plugin.id, true);
-    }
+    await this._deactivateAndDeregisterPlugin(plugin.id);
     this.app.registerPlugin(plugin);
     if (plugin.autoStart) {
       try {
@@ -334,6 +345,88 @@ class PluginPlayground {
         });
         return;
       }
+    }
+  }
+
+  private _ensureDeactivateSupport(
+    plugin: IPlugin<JupyterFrontEnd, unknown>
+  ): IPlugin<JupyterFrontEnd, unknown> {
+    const trackedCommandDisposables: Array<{ dispose: () => void }> = [];
+    const originalActivate = plugin.activate;
+    const originalDeactivate = plugin.deactivate;
+
+    plugin.activate = async (app: JupyterFrontEnd, ...services: unknown[]) => {
+      const originalAddCommand = app.commands.addCommand.bind(app.commands);
+      app.commands.addCommand = ((id, options) => {
+        const disposable = originalAddCommand(id, options);
+        trackedCommandDisposables.push(disposable);
+        return disposable;
+      }) as typeof app.commands.addCommand;
+
+      try {
+        return await originalActivate(app, ...services);
+      } catch (error) {
+        this._disposeTrackedCommands(trackedCommandDisposables);
+        throw error;
+      } finally {
+        app.commands.addCommand = originalAddCommand;
+      }
+    };
+
+    plugin.deactivate = async (app: JupyterFrontEnd, ...services: unknown[]) => {
+      try {
+        if (originalDeactivate) {
+          await originalDeactivate(app, ...services);
+        }
+      } finally {
+        this._disposeTrackedCommands(trackedCommandDisposables);
+      }
+    };
+
+    return plugin;
+  }
+
+  private _disposeTrackedCommands(
+    trackedCommandDisposables: Array<{ dispose: () => void }>
+  ): void {
+    while (trackedCommandDisposables.length > 0) {
+      const disposable = trackedCommandDisposables.pop();
+      if (!disposable) {
+        continue;
+      }
+      try {
+        disposable.dispose();
+      } catch (error) {
+        console.warn('Failed to dispose plugin command registration', error);
+      }
+    }
+  }
+
+  private async _deactivateAndDeregisterPlugin(pluginId: string): Promise<void> {
+    if (!this.app.hasPlugin(pluginId)) {
+      return;
+    }
+
+    if (this.app.isPluginActivated(pluginId)) {
+      try {
+        await this.app.deactivatePlugin(pluginId);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown deactivation error';
+        await showDialog({
+          title: 'Plugin deactivation failed',
+          body:
+            `Could not deactivate "${pluginId}" before reload. ` +
+            'Falling back to forced reload. Add `deactivate()` to the plugin ' +
+            'and dependent plugins for clean reruns. ' +
+            message,
+          buttons: [Dialog.okButton()]
+        });
+      }
+    }
+
+    if (this.app.hasPlugin(pluginId)) {
+      this.app.deregisterPlugin(pluginId, true);
     }
   }
 
