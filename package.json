@@ -108,10 +108,10 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^2.8.0",
     "rimraf": "^3.0.2",
-    "type-fest": "^4.35.0",
     "typescript": "~5.5.4"
   },
   "resolutions": {
+    "globals": "13.24.0",
     "lib0": "0.2.111"
   },
   "sideEffects": [
