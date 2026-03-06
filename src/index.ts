@@ -373,7 +373,10 @@ class PluginPlayground {
       }
     };
 
-    plugin.deactivate = async (app: JupyterFrontEnd, ...services: unknown[]) => {
+    plugin.deactivate = async (
+      app: JupyterFrontEnd,
+      ...services: unknown[]
+    ) => {
       try {
         if (originalDeactivate) {
           await originalDeactivate(app, ...services);
@@ -402,7 +405,9 @@ class PluginPlayground {
     }
   }
 
-  private async _deactivateAndDeregisterPlugin(pluginId: string): Promise<void> {
+  private async _deactivateAndDeregisterPlugin(
+    pluginId: string
+  ): Promise<void> {
     if (!this.app.hasPlugin(pluginId)) {
       return;
     }
