@@ -7,9 +7,9 @@
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/jupyterlab/jupyterlab-plugin-playground",
+  "homepage": "https://github.com/jupyterlab/plugin-playground",
   "bugs": {
-    "url": "https://github.com/jupyterlab/jupyterlab-plugin-playground/issues"
+    "url": "https://github.com/jupyterlab/plugin-playground/issues"
   },
   "license": "BSD-3-Clause",
   "author": {
@@ -26,7 +26,7 @@
   "style": "style/index.css",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jupyterlab/jupyterlab-plugin-playground.git"
+    "url": "https://github.com/jupyterlab/plugin-playground.git"
   },
   "packageManager": "yarn@3.5.0",
   "scripts": {
@@ -40,7 +40,7 @@
     "clean:labextension": "rimraf jupyterlab_plugin_playground/labextension",
     "clean:all": "jlpm run clean:lib && jlpm run clean:labextension",
     "eslint": "jlpm eslint:check --fix",
-    "eslint:check": "eslint . --cache --ext .ts,.tsx",
+    "eslint:check": "eslint . --cache",
     "lint": "jlpm prettier && jlpm eslint",
     "lint:check": "jlpm prettier:check && jlpm eslint:check",
     "prettier": "jlpm prettier:base --write --list-different",
@@ -64,8 +64,10 @@
     "typescript": "~5.5.4"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.3",
     "@jupyter/collaborative-drive": "^4.2.1",
     "@jupyter/docprovider": "^4.1.1",
+    "@jupyter/eslint-plugin": "^0.0.1",
     "@jupyterlab/builder": "^4.5.5",
     "@jupyterlab/cell-toolbar": "^4.5.5",
     "@jupyterlab/completer": "^4.5.5",
@@ -99,17 +101,17 @@
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "@types/requirejs": "^2.1.34",
-    "@typescript-eslint/eslint-plugin": "^5.0.0",
-    "@typescript-eslint/parser": "^5.0.0",
-    "eslint": "^8.0.0",
-    "eslint-config-prettier": "^8.0.0",
-    "eslint-plugin-prettier": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "eslint": "^9.39.3",
+    "eslint-config-prettier": "^10.1.8",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.8.0",
     "rimraf": "^3.0.2",
     "typescript": "~5.5.4"
   },
   "resolutions": {
+    "globals": "13.24.0",
     "lib0": "0.2.111"
   },
   "sideEffects": [
