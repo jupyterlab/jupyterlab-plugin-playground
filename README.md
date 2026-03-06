@@ -20,6 +20,8 @@ This extension provides a new command, `Load Current File As Extension`, availab
 
 It also adds a right sidebar panel listing token string IDs you can use in plugin `requires` and `optional` arrays, with search, copy, and import actions.
 
+It also adds a second right sidebar panel with discovered examples from a local clone of [`jupyterlab/extension-examples`](https://github.com/jupyterlab/extension-examples), so you can open them directly from the panel.
+
 As an example, open the text editor by creating a new text file and paste this small JupyterLab plugin into it. This plugin will create a simple command `My Super Cool Toggle` in the command palette that can be toggled on and off.
 
 ```typescript

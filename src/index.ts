@@ -26,6 +26,8 @@ import { extensionIcon } from '@jupyterlab/ui-components';
 
 import { IDocumentManager } from '@jupyterlab/docmanager';
 
+import { Contents } from '@jupyterlab/services';
+
 import { PluginLoader, PluginLoadingError } from './loader';
 
 import { PluginTranspiler } from './transpiler';
@@ -39,6 +41,8 @@ import { ImportResolver } from './resolver';
 import { IRequireJS, RequireJSLoader } from './requirejs';
 
 import { TokenSidebar } from './token-sidebar';
+
+import { ExampleSidebar } from './example-sidebar';
 
 import { tokenSidebarIcon } from './icons';
 
@@ -92,6 +96,18 @@ interface IPrivatePluginData {
     description?: unknown;
   };
 }
+
+type IDirectoryModel = Contents.IModel & {
+  type: 'directory';
+  content: Contents.IModel[];
+};
+
+type ITextFileModel = Contents.IModel & {
+  type: 'file';
+  content: string;
+};
+
+const EXTENSION_EXAMPLES_ROOT = 'extension-examples';
 
 class PluginPlayground {
   constructor(
@@ -181,6 +197,17 @@ class PluginPlayground {
       tokenSidebar.title.caption = 'Available service token strings for plugin';
       tokenSidebar.title.icon = tokenSidebarIcon;
       this.app.shell.add(tokenSidebar, 'right', { rank: 650 });
+
+      const exampleSidebar = new ExampleSidebar({
+        fetchExamples: this._discoverExtensionExamples.bind(this),
+        onOpenExample: this._openExtensionExample.bind(this)
+      });
+      exampleSidebar.id = 'jp-plugin-example-sidebar';
+      exampleSidebar.title.caption =
+        'jupyterlab/extension-examples plugin entrypoints';
+      exampleSidebar.title.icon = extensionIcon;
+      this.app.shell.add(exampleSidebar, 'right', { rank: 651 });
+
       app.shell.currentChanged?.connect(() => {
         tokenSidebar.update();
       });
@@ -314,6 +341,135 @@ class PluginPlayground {
     const response = await fetch(url);
     const jsBody = await response.text();
     this._loadPlugin(jsBody, null);
+  }
+
+  private async _openExtensionExample(examplePath: string): Promise<void> {
+    await this.app.commands.execute('docmanager:open', {
+      path: examplePath,
+      factory: 'Editor'
+    });
+  }
+
+  private async _discoverExtensionExamples(): Promise<
+    ReadonlyArray<ExampleSidebar.IExampleRecord>
+  > {
+    const rootDirectory = await this._getDirectoryModel(
+      EXTENSION_EXAMPLES_ROOT
+    );
+    if (!rootDirectory) {
+      return [];
+    }
+
+    const discovered: ExampleSidebar.IExampleRecord[] = [];
+    for (const item of rootDirectory.content) {
+      if (item.type !== 'directory' || item.name.startsWith('.')) {
+        continue;
+      }
+      const exampleDirectory = this._joinPath(
+        EXTENSION_EXAMPLES_ROOT,
+        item.name
+      );
+      const entrypoint = await this._findExampleEntrypoint(exampleDirectory);
+      if (!entrypoint) {
+        continue;
+      }
+      const description = await this._readExampleDescription(exampleDirectory);
+      discovered.push({
+        name: item.name,
+        path: entrypoint,
+        description
+      });
+    }
+
+    return discovered.sort((left, right) =>
+      left.name.localeCompare(right.name)
+    );
+  }
+
+  private async _getDirectoryModel(
+    path: string
+  ): Promise<IDirectoryModel | null> {
+    try {
+      const model = await this.app.serviceManager.contents.get(path, {
+        content: true
+      });
+      if (model.type !== 'directory' || !Array.isArray(model.content)) {
+        return null;
+      }
+      return model as IDirectoryModel;
+    } catch {
+      return null;
+    }
+  }
+
+  private async _findExampleEntrypoint(
+    directoryPath: string
+  ): Promise<string | null> {
+    const srcDirectory = await this._getDirectoryModel(
+      this._joinPath(directoryPath, 'src')
+    );
+    if (!srcDirectory) {
+      return null;
+    }
+    const entrypoint = srcDirectory.content.find(
+      (item: Contents.IModel) =>
+        item.type === 'file' &&
+        (item.name === 'index.ts' || item.name === 'index.js')
+    );
+    if (!entrypoint) {
+      return null;
+    }
+    return this._joinPath(srcDirectory.path, entrypoint.name);
+  }
+
+  private async _readExampleDescription(
+    directoryPath: string
+  ): Promise<string> {
+    const packageJsonPath = this._joinPath(directoryPath, 'package.json');
+    const packageJson = await this._getTextFileModel(packageJsonPath);
+    if (!packageJson) {
+      return this._fallbackExampleDescription;
+    }
+    try {
+      const packageData = JSON.parse(packageJson.content) as {
+        description?: unknown;
+      };
+      if (typeof packageData.description === 'string') {
+        const description = packageData.description.trim();
+        if (description.length > 0) {
+          return description;
+        }
+      }
+    } catch {
+      // fall back to a default description
+    }
+    return this._fallbackExampleDescription;
+  }
+
+  private _joinPath(base: string, child: string): string {
+    const normalizedBase = base.replace(/\/+$/g, '');
+    const normalizedChild = child.replace(/^\/+/g, '');
+    if (!normalizedBase) {
+      return normalizedChild;
+    }
+    return `${normalizedBase}/${normalizedChild}`;
+  }
+
+  private async _getTextFileModel(
+    path: string
+  ): Promise<ITextFileModel | null> {
+    try {
+      const model = await this.app.serviceManager.contents.get(path, {
+        content: true,
+        format: 'text'
+      });
+      if (model.type !== 'file' || typeof model.content !== 'string') {
+        return null;
+      }
+      return model as ITextFileModel;
+    } catch {
+      return null;
+    }
   }
 
   private _populateTokenMap(): void {
@@ -488,6 +644,8 @@ class PluginPlayground {
     return !!(sourceModel && sourceModel.sharedModel);
   }
 
+  private readonly _fallbackExampleDescription =
+    'No description provided by this example.';
   private readonly _tokenMap = new Map<string, Token<string>>();
   private readonly _tokenDescriptionMap = new Map<string, string>();
 }
