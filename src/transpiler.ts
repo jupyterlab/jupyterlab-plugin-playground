@@ -61,9 +61,10 @@ export class PluginTranspiler {
         const transpiledStatements = [...source.statements];
         const pinnedStatements = [];
         if (isUseStrict(transpiledStatements[0])) {
-          // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
-          const first = transpiledStatements.shift()!;
-          pinnedStatements.push(first);
+          const first = transpiledStatements.shift();
+          if (first) {
+            pinnedStatements.push(first);
+          }
         }
         return ts.factory.updateSourceFile(source, [
           ...pinnedStatements,
