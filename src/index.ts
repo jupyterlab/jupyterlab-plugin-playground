@@ -44,7 +44,7 @@ import { TokenSidebar } from './token-sidebar';
 
 import { ExampleSidebar } from './example-sidebar';
 
-import { tokenSidebarIcon } from './icons';
+import { tokenSidebarIcon, examplesSidebarIcon } from './icons';
 
 import { Token } from '@lumino/coreutils';
 
@@ -205,7 +205,7 @@ class PluginPlayground {
       exampleSidebar.id = 'jp-plugin-example-sidebar';
       exampleSidebar.title.caption =
         'jupyterlab/extension-examples plugin entrypoints';
-      exampleSidebar.title.icon = extensionIcon;
+      exampleSidebar.title.icon = examplesSidebarIcon;
       this.app.shell.add(exampleSidebar, 'right', { rank: 651 });
 
       app.shell.currentChanged?.connect(() => {
