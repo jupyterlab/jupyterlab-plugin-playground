@@ -109,6 +109,7 @@ type IDirectoryModel = Contents.IModel & {
 type IFileModel = Contents.IModel & {
   type: 'file';
   content: unknown;
+  format?: string | null;
 };
 
 const EXTENSION_EXAMPLES_ROOT = 'extension-examples';
@@ -462,10 +463,10 @@ class PluginPlayground {
       if (item.type !== 'directory' || item.name.startsWith('.')) {
         continue;
       }
-      const exampleDirectory = this._joinPath(
-        EXTENSION_EXAMPLES_ROOT,
-        item.name
-      );
+      const exampleDirectory =
+        typeof item.path === 'string' && item.path.length > 0
+          ? item.path
+          : this._joinPath(EXTENSION_EXAMPLES_ROOT, item.name);
       const entrypoint = await this._findExampleEntrypoint(exampleDirectory);
       if (!entrypoint) {
         continue;
@@ -533,24 +534,7 @@ class PluginPlayground {
     if (!packageJson) {
       return this._fallbackExampleDescription;
     }
-
-    let packageData: { description?: unknown } | null = null;
-    if (
-      packageJson.content !== null &&
-      typeof packageJson.content === 'object' &&
-      !Array.isArray(packageJson.content)
-    ) {
-      packageData = packageJson.content as { description?: unknown };
-    } else if (typeof packageJson.content === 'string') {
-      try {
-        const parsed = JSON.parse(packageJson.content) as unknown;
-        if (parsed !== null && typeof parsed === 'object') {
-          packageData = parsed as { description?: unknown };
-        }
-      } catch {
-        return this._fallbackExampleDescription;
-      }
-    }
+    const packageData = this._parseJsonObject(packageJson);
 
     if (packageData && typeof packageData.description === 'string') {
       const description = packageData.description.trim();
@@ -573,21 +557,78 @@ class PluginPlayground {
 
   private async _getFileModel(path: string): Promise<IFileModel | null> {
     for (const candidatePath of this._pathCandidates(path)) {
-      try {
-        const model = await this.app.serviceManager.contents.get(
-          candidatePath,
-          {
-            content: true
+      for (const format of ['text', 'json', null] as const) {
+        try {
+          const model = await this.app.serviceManager.contents.get(
+            candidatePath,
+            format
+              ? {
+                  content: true,
+                  format
+                }
+              : {
+                  content: true
+                }
+          );
+          if (model.type !== 'file') {
+            continue;
           }
-        );
-        if (model.type !== 'file') {
+          if (model.content === null) {
+            continue;
+          }
+          return model as IFileModel;
+        } catch {
           continue;
         }
-        return model as IFileModel;
-      } catch {
-        continue;
       }
     }
+    return null;
+  }
+
+  private _parseJsonObject(
+    fileModel: IFileModel
+  ): { description?: unknown } | null {
+    if (
+      fileModel.content !== null &&
+      typeof fileModel.content === 'object' &&
+      !Array.isArray(fileModel.content)
+    ) {
+      return fileModel.content as { description?: unknown };
+    }
+    if (typeof fileModel.content !== 'string') {
+      return null;
+    }
+
+    const tryParse = (raw: string): { description?: unknown } | null => {
+      try {
+        const parsed = JSON.parse(raw) as unknown;
+        if (
+          parsed !== null &&
+          typeof parsed === 'object' &&
+          !Array.isArray(parsed)
+        ) {
+          return parsed as { description?: unknown };
+        }
+      } catch {
+        return null;
+      }
+      return null;
+    };
+
+    const parsedText = tryParse(fileModel.content);
+    if (parsedText) {
+      return parsedText;
+    }
+
+    if (fileModel.format === 'base64') {
+      try {
+        const decoded = atob(fileModel.content);
+        return tryParse(decoded);
+      } catch {
+        return null;
+      }
+    }
+
     return null;
   }
 
