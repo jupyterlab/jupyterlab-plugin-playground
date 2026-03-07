@@ -1,0 +1,45 @@
+name: Preview Badges
+on:
+  pull_request_target:
+    types: [opened]
+
+jobs:
+  previews:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: jupyterlab/maintainer-tools/.github/actions/binder-link@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const repoSlug = context.repo.repo;
+            const jupyterliteUrl = `https://${repoSlug}--${prNumber}.org.readthedocs.build/en/${prNumber}/lite/lab/`;
+            const jupyterliteBadge = `[![JupyterLite](https://jupyterlite.rtfd.io/en/latest/_static/badge-launch.svg)](${jupyterliteUrl})`;
+            const marker = " :point_left:";
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            const binderComment = comments
+              .slice()
+              .reverse()
+              .find(comment => comment.body.includes("![Binder]("));
+            if (
+              !binderComment ||
+              binderComment.body.includes("![JupyterLite](") ||
+              !binderComment.body.includes(marker)
+            ) {
+              return;
+            }
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: binderComment.id,
+              body: binderComment.body.replace(marker, ` ${jupyterliteBadge}${marker}`)
+            });
