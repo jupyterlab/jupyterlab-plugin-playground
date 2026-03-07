@@ -44,7 +44,7 @@ import { TokenSidebar } from './token-sidebar';
 
 import { ExampleSidebar } from './example-sidebar';
 
-import { tokenSidebarIcon, examplesSidebarIcon } from './icons';
+import { tokenSidebarIcon } from './icons';
 
 import { Token } from '@lumino/coreutils';
 
@@ -210,7 +210,6 @@ class PluginPlayground {
       exampleSidebar.title.label = 'Extension Examples';
       exampleSidebar.title.caption =
         'jupyterlab/extension-examples plugin entrypoints';
-      exampleSidebar.title.icon = examplesSidebarIcon;
 
       const playgroundSidebar = new SidePanel();
       playgroundSidebar.id = 'jp-plugin-playground-sidebar';
