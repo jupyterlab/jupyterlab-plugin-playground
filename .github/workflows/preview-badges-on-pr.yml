@@ -17,8 +17,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const prNumber = context.payload.pull_request.number;
-            const repoSlug = context.repo.repo;
-            const jupyterliteUrl = `https://${repoSlug}--${prNumber}.org.readthedocs.build/en/${prNumber}/lite/lab/`;
+            const docsSlug =
+              `${context.repo.owner}-${context.repo.repo}`.toLowerCase();
+            const jupyterliteUrl = `https://${docsSlug}--${prNumber}.org.readthedocs.build/en/${prNumber}/lite/lab/`;
             const jupyterliteBadge = `[![JupyterLite](https://jupyterlite.rtfd.io/en/latest/_static/badge-launch.svg)](${jupyterliteUrl})`;
             const marker = " :point_left:";
             const { data: comments } = await github.rest.issues.listComments({
