@@ -18,17 +18,6 @@ export namespace ExampleSidebar {
 }
 
 export class ExampleSidebar extends ReactWidget {
-  private readonly _fetchExamples: () => Promise<
-    ReadonlyArray<ExampleSidebar.IExampleRecord>
-  >;
-  private readonly _onOpenExample: (
-    examplePath: string
-  ) => Promise<void> | void;
-  private _query = '';
-  private _examples: ReadonlyArray<ExampleSidebar.IExampleRecord> = [];
-  private _isLoading = false;
-  private _errorMessage = '';
-
   constructor(options: ExampleSidebar.IOptions) {
     super();
     this._fetchExamples = options.fetchExamples;
@@ -169,4 +158,15 @@ export class ExampleSidebar extends ReactWidget {
       });
     }
   }
+
+  private readonly _fetchExamples: () => Promise<
+    ReadonlyArray<ExampleSidebar.IExampleRecord>
+  >;
+  private readonly _onOpenExample: (
+    examplePath: string
+  ) => Promise<void> | void;
+  private _query = '';
+  private _examples: ReadonlyArray<ExampleSidebar.IExampleRecord> = [];
+  private _isLoading = false;
+  private _errorMessage = '';
 }

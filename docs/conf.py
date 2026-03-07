@@ -82,8 +82,6 @@ def _sync_examples_to_lite_contents(root):
             continue
 
         src_dir = example_dir / "src"
-        if not src_dir.is_dir():
-            continue
         if not ((src_dir / "index.ts").exists() or (src_dir / "index.js").exists()):
             continue
 

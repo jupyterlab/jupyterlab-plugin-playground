@@ -210,7 +210,7 @@ class PluginPlayground {
       exampleSidebar.id = 'jp-plugin-example-sidebar';
       exampleSidebar.title.label = 'Extension Examples';
       exampleSidebar.title.caption =
-        'jupyterlab/extension-examples plugin entrypoints';
+        'Browse plugin examples from jupyterlab/extension-examples';
 
       const playgroundSidebar = new SidePanel();
       playgroundSidebar.id = 'jp-plugin-playground-sidebar';
@@ -457,9 +457,9 @@ class PluginPlayground {
     if (!rootDirectory) {
       return [];
     }
-    const rootPath = this._normalizeContentsPath(
-      rootDirectory.path || EXTENSION_EXAMPLES_ROOT
-    );
+    const rootPath =
+      this._normalizeContentsPath(rootDirectory.path) ||
+      EXTENSION_EXAMPLES_ROOT;
 
     const discovered: ExampleSidebar.IExampleRecord[] = [];
     for (const item of rootDirectory.content) {
@@ -634,19 +634,14 @@ class PluginPlayground {
     // leading-slash conventions; try both forms to keep example discovery and
     // file reads working in both environments.
     const trimmed = this._normalizeContentsPath(path);
-    const candidates = new Set<string>();
-    if (path.length > 0) {
-      candidates.add(path);
+    if (trimmed.length === 0) {
+      return [];
     }
-    if (trimmed.length > 0) {
-      candidates.add(trimmed);
-      candidates.add(`/${trimmed}`);
-    }
-    return Array.from(candidates);
+    return [trimmed, `/${trimmed}`];
   }
 
-  private _normalizeContentsPath(path: string): string {
-    return path.replace(/^\/+/g, '');
+  private _normalizeContentsPath(path: string | null | undefined): string {
+    return (path ?? '').replace(/^\/+/g, '');
   }
 
   private async _getContentsModel(
