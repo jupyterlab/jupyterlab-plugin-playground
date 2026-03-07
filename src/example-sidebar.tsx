@@ -69,7 +69,7 @@ export class ExampleSidebar extends ReactWidget {
         </p>
         {this._isLoading ? (
           <p className="jp-PluginPlayground-count jp-PluginPlayground-exampleCount">
-            Loading extension examples...
+            Loading extension examples…
           </p>
         ) : null}
         {this._errorMessage ? (

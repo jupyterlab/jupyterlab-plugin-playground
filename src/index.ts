@@ -106,9 +106,9 @@ type IDirectoryModel = Contents.IModel & {
   content: Contents.IModel[];
 };
 
-type ITextFileModel = Contents.IModel & {
+type IFileModel = Contents.IModel & {
   type: 'file';
-  content: string;
+  content: unknown;
 };
 
 const EXTENSION_EXAMPLES_ROOT = 'extension-examples';
@@ -486,17 +486,23 @@ class PluginPlayground {
   private async _getDirectoryModel(
     path: string
   ): Promise<IDirectoryModel | null> {
-    try {
-      const model = await this.app.serviceManager.contents.get(path, {
-        content: true
-      });
-      if (model.type !== 'directory' || !Array.isArray(model.content)) {
-        return null;
+    for (const candidatePath of this._pathCandidates(path)) {
+      try {
+        const model = await this.app.serviceManager.contents.get(
+          candidatePath,
+          {
+            content: true
+          }
+        );
+        if (model.type !== 'directory' || !Array.isArray(model.content)) {
+          continue;
+        }
+        return model as IDirectoryModel;
+      } catch {
+        continue;
       }
-      return model as IDirectoryModel;
-    } catch {
-      return null;
     }
+    return null;
   }
 
   private async _findExampleEntrypoint(
@@ -523,23 +529,36 @@ class PluginPlayground {
     directoryPath: string
   ): Promise<string> {
     const packageJsonPath = this._joinPath(directoryPath, 'package.json');
-    const packageJson = await this._getTextFileModel(packageJsonPath);
+    const packageJson = await this._getFileModel(packageJsonPath);
     if (!packageJson) {
       return this._fallbackExampleDescription;
     }
-    try {
-      const packageData = JSON.parse(packageJson.content) as {
-        description?: unknown;
-      };
-      if (typeof packageData.description === 'string') {
-        const description = packageData.description.trim();
-        if (description.length > 0) {
-          return description;
+
+    let packageData: { description?: unknown } | null = null;
+    if (
+      packageJson.content !== null &&
+      typeof packageJson.content === 'object' &&
+      !Array.isArray(packageJson.content)
+    ) {
+      packageData = packageJson.content as { description?: unknown };
+    } else if (typeof packageJson.content === 'string') {
+      try {
+        const parsed = JSON.parse(packageJson.content) as unknown;
+        if (parsed !== null && typeof parsed === 'object') {
+          packageData = parsed as { description?: unknown };
         }
+      } catch {
+        return this._fallbackExampleDescription;
       }
-    } catch {
-      // fall back to a default description
     }
+
+    if (packageData && typeof packageData.description === 'string') {
+      const description = packageData.description.trim();
+      if (description.length > 0) {
+        return description;
+      }
+    }
+
     return this._fallbackExampleDescription;
   }
 
@@ -552,21 +571,37 @@ class PluginPlayground {
     return `${normalizedBase}/${normalizedChild}`;
   }
 
-  private async _getTextFileModel(
-    path: string
-  ): Promise<ITextFileModel | null> {
-    try {
-      const model = await this.app.serviceManager.contents.get(path, {
-        content: true,
-        format: 'text'
-      });
-      if (model.type !== 'file' || typeof model.content !== 'string') {
-        return null;
+  private async _getFileModel(path: string): Promise<IFileModel | null> {
+    for (const candidatePath of this._pathCandidates(path)) {
+      try {
+        const model = await this.app.serviceManager.contents.get(
+          candidatePath,
+          {
+            content: true
+          }
+        );
+        if (model.type !== 'file') {
+          continue;
+        }
+        return model as IFileModel;
+      } catch {
+        continue;
       }
-      return model as ITextFileModel;
-    } catch {
-      return null;
     }
+    return null;
+  }
+
+  private _pathCandidates(path: string): string[] {
+    const trimmed = path.replace(/^\/+/g, '');
+    const candidates = new Set<string>();
+    if (path.length > 0) {
+      candidates.add(path);
+    }
+    if (trimmed.length > 0) {
+      candidates.add(trimmed);
+      candidates.add(`/${trimmed}`);
+    }
+    return Array.from(candidates);
   }
 
   private _populateTokenMap(): void {
