@@ -443,7 +443,7 @@ class PluginPlayground {
 
   private async _openExtensionExample(examplePath: string): Promise<void> {
     await this.app.commands.execute('docmanager:open', {
-      path: examplePath,
+      path: this._normalizeContentsPath(examplePath),
       factory: 'Editor'
     });
   }
@@ -457,16 +457,16 @@ class PluginPlayground {
     if (!rootDirectory) {
       return [];
     }
+    const rootPath = this._normalizeContentsPath(
+      rootDirectory.path || EXTENSION_EXAMPLES_ROOT
+    );
 
     const discovered: ExampleSidebar.IExampleRecord[] = [];
     for (const item of rootDirectory.content) {
       if (item.type !== 'directory' || item.name.startsWith('.')) {
         continue;
       }
-      const exampleDirectory =
-        typeof item.path === 'string' && item.path.length > 0
-          ? item.path
-          : this._joinPath(EXTENSION_EXAMPLES_ROOT, item.name);
+      const exampleDirectory = this._joinPath(rootPath, item.name);
       const entrypoint = await this._findExampleEntrypoint(exampleDirectory);
       if (!entrypoint) {
         continue;
@@ -488,20 +488,17 @@ class PluginPlayground {
     path: string
   ): Promise<IDirectoryModel | null> {
     for (const candidatePath of this._pathCandidates(path)) {
-      try {
-        const model = await this.app.serviceManager.contents.get(
-          candidatePath,
-          {
-            content: true
-          }
-        );
-        if (model.type !== 'directory' || !Array.isArray(model.content)) {
-          continue;
-        }
-        return model as IDirectoryModel;
-      } catch {
+      const model = await this._getContentsModel(candidatePath, {
+        content: true
+      });
+      if (
+        !model ||
+        model.type !== 'directory' ||
+        !Array.isArray(model.content)
+      ) {
         continue;
       }
+      return model as IDirectoryModel;
     }
     return null;
   }
@@ -523,7 +520,9 @@ class PluginPlayground {
     if (!entrypoint) {
       return null;
     }
-    return this._joinPath(srcDirectory.path, entrypoint.name);
+    return this._normalizeContentsPath(
+      this._joinPath(srcDirectory.path, entrypoint.name)
+    );
   }
 
   private async _readExampleDescription(
@@ -536,9 +535,9 @@ class PluginPlayground {
     }
     const packageData = this._parseJsonObject(packageJson);
 
-    if (packageData && typeof packageData.description === 'string') {
-      const description = packageData.description.trim();
-      if (description.length > 0) {
+    if (packageData) {
+      const description = this._stringValue(packageData.description);
+      if (description) {
         return description;
       }
     }
@@ -548,7 +547,7 @@ class PluginPlayground {
 
   private _joinPath(base: string, child: string): string {
     const normalizedBase = base.replace(/\/+$/g, '');
-    const normalizedChild = child.replace(/^\/+/g, '');
+    const normalizedChild = this._normalizeContentsPath(child);
     if (!normalizedBase) {
       return normalizedChild;
     }
@@ -557,29 +556,27 @@ class PluginPlayground {
 
   private async _getFileModel(path: string): Promise<IFileModel | null> {
     for (const candidatePath of this._pathCandidates(path)) {
-      for (const format of ['text', 'json', null] as const) {
-        try {
-          const model = await this.app.serviceManager.contents.get(
-            candidatePath,
-            format
-              ? {
-                  content: true,
-                  format
-                }
-              : {
-                  content: true
-                }
-          );
-          if (model.type !== 'file') {
-            continue;
-          }
-          if (model.content === null) {
-            continue;
-          }
-          return model as IFileModel;
-        } catch {
-          continue;
-        }
+      const model = await this._getContentsModel(candidatePath, {
+        content: true
+      });
+      if (!model || model.type !== 'file') {
+        continue;
+      }
+      if (model.content !== null) {
+        return model as IFileModel;
+      }
+
+      // Some jupyterlite setups need an explicit text request for file content.
+      const textModel = await this._getContentsModel(candidatePath, {
+        content: true,
+        format: 'text'
+      });
+      if (
+        textModel &&
+        textModel.type === 'file' &&
+        textModel.content !== null
+      ) {
+        return textModel as IFileModel;
       }
     }
     return null;
@@ -633,7 +630,10 @@ class PluginPlayground {
   }
 
   private _pathCandidates(path: string): string[] {
-    const trimmed = path.replace(/^\/+/g, '');
+    // Jupyter Server vs JupyterLite can expose contents paths with different
+    // leading-slash conventions; try both forms to keep example discovery and
+    // file reads working in both environments.
+    const trimmed = this._normalizeContentsPath(path);
     const candidates = new Set<string>();
     if (path.length > 0) {
       candidates.add(path);
@@ -643,6 +643,21 @@ class PluginPlayground {
       candidates.add(`/${trimmed}`);
     }
     return Array.from(candidates);
+  }
+
+  private _normalizeContentsPath(path: string): string {
+    return path.replace(/^\/+/g, '');
+  }
+
+  private async _getContentsModel(
+    path: string,
+    options: Contents.IFetchOptions
+  ): Promise<Contents.IModel | null> {
+    try {
+      return await this.app.serviceManager.contents.get(path, options);
+    } catch {
+      return null;
+    }
   }
 
   private _populateTokenMap(): void {
