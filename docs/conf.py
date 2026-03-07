@@ -22,7 +22,6 @@ html_css_files = ["custom.css"]
 
 
 def _ensure_extension_examples(root):
-    import shutil
     import subprocess
 
     examples = root / "extension-examples"
@@ -30,37 +29,34 @@ def _ensure_extension_examples(root):
         return examples
 
     if (root / ".git").exists():
-        subprocess.call(
-            [
-                "git",
-                "submodule",
-                "update",
-                "--init",
-                "--recursive",
-                "extension-examples",
-            ],
-            cwd=str(root),
+        try:
+            subprocess.check_call(
+                [
+                    "git",
+                    "submodule",
+                    "update",
+                    "--init",
+                    "--recursive",
+                    "extension-examples",
+                ],
+                cwd=str(root),
+            )
+        except subprocess.CalledProcessError as exc:
+            raise RuntimeError(
+                "Failed to initialize the 'extension-examples' submodule."
+            ) from exc
+
+        if (examples / "README.md").exists():
+            return examples
+
+        raise RuntimeError(
+            "Submodule update completed but 'extension-examples' was not found."
         )
 
-    if (examples / "README.md").exists():
-        return examples
-
-    if examples.exists():
-        shutil.rmtree(examples)
-
-    subprocess.check_call(
-        [
-            "git",
-            "clone",
-            "--depth",
-            "1",
-            "https://github.com/jupyterlab/extension-examples.git",
-            str(examples),
-        ],
-        cwd=str(root),
+    raise RuntimeError(
+        "Missing 'extension-examples'. Build from a git checkout with submodules "
+        "initialized."
     )
-
-    return examples
 
 
 def _sync_examples_to_lite_contents(root):
