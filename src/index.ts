@@ -22,9 +22,11 @@ import { FileEditor, IEditorTracker } from '@jupyterlab/fileeditor';
 
 import { ILauncher } from '@jupyterlab/launcher';
 
-import { extensionIcon } from '@jupyterlab/ui-components';
+import { extensionIcon, SidePanel } from '@jupyterlab/ui-components';
 
 import { IDocumentManager } from '@jupyterlab/docmanager';
+
+import { Contents } from '@jupyterlab/services';
 
 import { PluginLoader, PluginLoadingError } from './loader';
 
@@ -40,9 +42,15 @@ import { IRequireJS, RequireJSLoader } from './requirejs';
 
 import { TokenSidebar } from './token-sidebar';
 
+import { ExampleSidebar } from './example-sidebar';
+
 import { tokenSidebarIcon } from './icons';
 
 import { Token } from '@lumino/coreutils';
+
+import { AccordionPanel } from '@lumino/widgets';
+
+import { IPlugin } from '@lumino/application';
 
 namespace CommandIDs {
   export const createNewFile = 'plugin-playground:create-new-plugin';
@@ -92,6 +100,19 @@ interface IPrivatePluginData {
     description?: unknown;
   };
 }
+
+type IDirectoryModel = Contents.IModel & {
+  type: 'directory';
+  content: Contents.IModel[];
+};
+
+type IFileModel = Contents.IModel & {
+  type: 'file';
+  content: unknown;
+  format?: string | null;
+};
+
+const EXTENSION_EXAMPLES_ROOT = 'extension-examples';
 
 class PluginPlayground {
   constructor(
@@ -178,9 +199,30 @@ class PluginPlayground {
         isImportEnabled: this._canInsertImport.bind(this)
       });
       tokenSidebar.id = 'jp-plugin-token-sidebar';
+      tokenSidebar.title.label = 'Service Tokens';
       tokenSidebar.title.caption = 'Available service token strings for plugin';
       tokenSidebar.title.icon = tokenSidebarIcon;
-      this.app.shell.add(tokenSidebar, 'right', { rank: 650 });
+
+      const exampleSidebar = new ExampleSidebar({
+        fetchExamples: this._discoverExtensionExamples.bind(this),
+        onOpenExample: this._openExtensionExample.bind(this)
+      });
+      exampleSidebar.id = 'jp-plugin-example-sidebar';
+      exampleSidebar.title.label = 'Extension Examples';
+      exampleSidebar.title.caption =
+        'Browse plugin examples from jupyterlab/extension-examples';
+
+      const playgroundSidebar = new SidePanel();
+      playgroundSidebar.id = 'jp-plugin-playground-sidebar';
+      playgroundSidebar.title.caption = 'Plugin Playground helper panels';
+      playgroundSidebar.title.icon = tokenSidebarIcon;
+      playgroundSidebar.addWidget(tokenSidebar);
+      playgroundSidebar.addWidget(exampleSidebar);
+      const accordion = playgroundSidebar.content as AccordionPanel;
+      accordion.collapse(0);
+      accordion.collapse(1);
+      this.app.shell.add(playgroundSidebar, 'right', { rank: 650 });
+
       app.shell.currentChanged?.connect(() => {
         tokenSidebar.update();
       });
@@ -270,7 +312,7 @@ class PluginPlayground {
       }
       return;
     }
-    const plugin = result.plugin;
+    const plugin = this._ensureDeactivateSupport(result.plugin);
 
     if (result.schema) {
       // TODO: this is mostly fine to get the menus and toolbars, but:
@@ -292,10 +334,7 @@ class PluginPlayground {
       ).emit(plugin.id);
     }
 
-    // Unregister plugin if already registered.
-    if (this.app.hasPlugin(plugin.id)) {
-      this.app.deregisterPlugin(plugin.id, true);
-    }
+    await this._deactivateAndDeregisterPlugin(plugin.id);
     this.app.registerPlugin(plugin);
     if (plugin.autoStart) {
       try {
@@ -310,10 +349,311 @@ class PluginPlayground {
     }
   }
 
+  private _ensureDeactivateSupport(
+    plugin: IPlugin<JupyterFrontEnd, unknown>
+  ): IPlugin<JupyterFrontEnd, unknown> {
+    const trackedCommandDisposables: Array<{ dispose: () => void }> = [];
+    const originalActivate = plugin.activate;
+    const originalDeactivate = plugin.deactivate;
+
+    plugin.activate = async (app: JupyterFrontEnd, ...services: unknown[]) => {
+      const originalAddCommand = app.commands.addCommand.bind(app.commands);
+      app.commands.addCommand = ((id, options) => {
+        const disposable = originalAddCommand(id, options);
+        trackedCommandDisposables.push(disposable);
+        return disposable;
+      }) as typeof app.commands.addCommand;
+
+      try {
+        return await originalActivate(app, ...services);
+      } catch (error) {
+        this._disposeTrackedCommands(trackedCommandDisposables);
+        throw error;
+      } finally {
+        app.commands.addCommand = originalAddCommand;
+      }
+    };
+
+    plugin.deactivate = async (
+      app: JupyterFrontEnd,
+      ...services: unknown[]
+    ) => {
+      try {
+        if (originalDeactivate) {
+          await originalDeactivate(app, ...services);
+        }
+      } finally {
+        this._disposeTrackedCommands(trackedCommandDisposables);
+      }
+    };
+
+    return plugin;
+  }
+
+  private _disposeTrackedCommands(
+    trackedCommandDisposables: Array<{ dispose: () => void }>
+  ): void {
+    while (trackedCommandDisposables.length > 0) {
+      const disposable = trackedCommandDisposables.pop();
+      if (!disposable) {
+        continue;
+      }
+      try {
+        disposable.dispose();
+      } catch (error) {
+        console.warn('Failed to dispose plugin command registration', error);
+      }
+    }
+  }
+
+  private async _deactivateAndDeregisterPlugin(
+    pluginId: string
+  ): Promise<void> {
+    if (!this.app.hasPlugin(pluginId)) {
+      return;
+    }
+
+    if (this.app.isPluginActivated(pluginId)) {
+      try {
+        await this.app.deactivatePlugin(pluginId);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown deactivation error';
+        await showDialog({
+          title: 'Plugin deactivation failed',
+          body:
+            `Could not deactivate "${pluginId}" before reload. ` +
+            'Falling back to forced reload. Add `deactivate()` to the plugin ' +
+            'and dependent plugins for clean reruns. ' +
+            message,
+          buttons: [Dialog.okButton()]
+        });
+      }
+    }
+
+    if (this.app.hasPlugin(pluginId)) {
+      this.app.deregisterPlugin(pluginId, true);
+    }
+  }
+
   private async _getModule(url: string) {
     const response = await fetch(url);
     const jsBody = await response.text();
     this._loadPlugin(jsBody, null);
+  }
+
+  private async _openExtensionExample(examplePath: string): Promise<void> {
+    await this.app.commands.execute('docmanager:open', {
+      path: this._normalizeContentsPath(examplePath),
+      factory: 'Editor'
+    });
+  }
+
+  private async _discoverExtensionExamples(): Promise<
+    ReadonlyArray<ExampleSidebar.IExampleRecord>
+  > {
+    const rootDirectory = await this._getDirectoryModel(
+      EXTENSION_EXAMPLES_ROOT
+    );
+    if (!rootDirectory) {
+      return [];
+    }
+    const rootPath =
+      this._normalizeContentsPath(rootDirectory.path) ||
+      EXTENSION_EXAMPLES_ROOT;
+
+    const discovered: ExampleSidebar.IExampleRecord[] = [];
+    for (const item of rootDirectory.content) {
+      if (item.type !== 'directory' || item.name.startsWith('.')) {
+        continue;
+      }
+      const exampleDirectory = this._joinPath(rootPath, item.name);
+      const entrypoint = await this._findExampleEntrypoint(exampleDirectory);
+      if (!entrypoint) {
+        continue;
+      }
+      const description = await this._readExampleDescription(exampleDirectory);
+      discovered.push({
+        name: item.name,
+        path: entrypoint,
+        description
+      });
+    }
+
+    return discovered.sort((left, right) =>
+      left.name.localeCompare(right.name)
+    );
+  }
+
+  private async _getDirectoryModel(
+    path: string
+  ): Promise<IDirectoryModel | null> {
+    for (const candidatePath of this._pathCandidates(path)) {
+      const model = await this._getContentsModel(candidatePath, {
+        content: true
+      });
+      if (
+        !model ||
+        model.type !== 'directory' ||
+        !Array.isArray(model.content)
+      ) {
+        continue;
+      }
+      return model as IDirectoryModel;
+    }
+    return null;
+  }
+
+  private async _findExampleEntrypoint(
+    directoryPath: string
+  ): Promise<string | null> {
+    const srcDirectory = await this._getDirectoryModel(
+      this._joinPath(directoryPath, 'src')
+    );
+    if (!srcDirectory) {
+      return null;
+    }
+    const entrypoint = srcDirectory.content.find(
+      (item: Contents.IModel) =>
+        item.type === 'file' &&
+        (item.name === 'index.ts' || item.name === 'index.js')
+    );
+    if (!entrypoint) {
+      return null;
+    }
+    return this._normalizeContentsPath(
+      this._joinPath(srcDirectory.path, entrypoint.name)
+    );
+  }
+
+  private async _readExampleDescription(
+    directoryPath: string
+  ): Promise<string> {
+    const packageJsonPath = this._joinPath(directoryPath, 'package.json');
+    const packageJson = await this._getFileModel(packageJsonPath);
+    if (!packageJson) {
+      return this._fallbackExampleDescription;
+    }
+    const packageData = this._parseJsonObject(packageJson);
+
+    if (packageData) {
+      const description = this._stringValue(packageData.description);
+      if (description) {
+        return description;
+      }
+    }
+
+    return this._fallbackExampleDescription;
+  }
+
+  private _joinPath(base: string, child: string): string {
+    const normalizedBase = base.replace(/\/+$/g, '');
+    const normalizedChild = this._normalizeContentsPath(child);
+    if (!normalizedBase) {
+      return normalizedChild;
+    }
+    return `${normalizedBase}/${normalizedChild}`;
+  }
+
+  private async _getFileModel(path: string): Promise<IFileModel | null> {
+    for (const candidatePath of this._pathCandidates(path)) {
+      const model = await this._getContentsModel(candidatePath, {
+        content: true
+      });
+      if (!model || model.type !== 'file') {
+        continue;
+      }
+      if (model.content !== null) {
+        return model as IFileModel;
+      }
+
+      // Some jupyterlite setups need an explicit text request for file content.
+      const textModel = await this._getContentsModel(candidatePath, {
+        content: true,
+        format: 'text'
+      });
+      if (
+        textModel &&
+        textModel.type === 'file' &&
+        textModel.content !== null
+      ) {
+        return textModel as IFileModel;
+      }
+    }
+    return null;
+  }
+
+  private _parseJsonObject(
+    fileModel: IFileModel
+  ): { description?: unknown } | null {
+    if (
+      fileModel.content !== null &&
+      typeof fileModel.content === 'object' &&
+      !Array.isArray(fileModel.content)
+    ) {
+      return fileModel.content as { description?: unknown };
+    }
+    if (typeof fileModel.content !== 'string') {
+      return null;
+    }
+
+    const tryParse = (raw: string): { description?: unknown } | null => {
+      try {
+        const parsed = JSON.parse(raw) as unknown;
+        if (
+          parsed !== null &&
+          typeof parsed === 'object' &&
+          !Array.isArray(parsed)
+        ) {
+          return parsed as { description?: unknown };
+        }
+      } catch {
+        return null;
+      }
+      return null;
+    };
+
+    const parsedText = tryParse(fileModel.content);
+    if (parsedText) {
+      return parsedText;
+    }
+
+    if (fileModel.format === 'base64') {
+      try {
+        const decoded = atob(fileModel.content);
+        return tryParse(decoded);
+      } catch {
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  private _pathCandidates(path: string): string[] {
+    // Jupyter Server vs JupyterLite can expose contents paths with different
+    // leading-slash conventions; try both forms to keep example discovery and
+    // file reads working in both environments.
+    const trimmed = this._normalizeContentsPath(path);
+    if (trimmed.length === 0) {
+      return [];
+    }
+    return [trimmed, `/${trimmed}`];
+  }
+
+  private _normalizeContentsPath(path: string | null | undefined): string {
+    return (path ?? '').replace(/^\/+/g, '');
+  }
+
+  private async _getContentsModel(
+    path: string,
+    options: Contents.IFetchOptions
+  ): Promise<Contents.IModel | null> {
+    try {
+      return await this.app.serviceManager.contents.get(path, options);
+    } catch {
+      return null;
+    }
   }
 
   private _populateTokenMap(): void {
@@ -488,6 +828,8 @@ class PluginPlayground {
     return !!(sourceModel && sourceModel.sharedModel);
   }
 
+  private readonly _fallbackExampleDescription =
+    'No description provided by this example.';
   private readonly _tokenMap = new Map<string, Token<string>>();
   private readonly _tokenDescriptionMap = new Map<string, string>();
 }
