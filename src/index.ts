@@ -48,6 +48,8 @@ import { tokenSidebarIcon } from './icons';
 
 import { Token } from '@lumino/coreutils';
 
+import { AccordionPanel } from '@lumino/widgets';
+
 import { IPlugin } from '@lumino/application';
 
 namespace CommandIDs {
@@ -216,6 +218,9 @@ class PluginPlayground {
       playgroundSidebar.title.icon = tokenSidebarIcon;
       playgroundSidebar.addWidget(tokenSidebar);
       playgroundSidebar.addWidget(exampleSidebar);
+      const accordion = playgroundSidebar.content as AccordionPanel;
+      accordion.collapse(0);
+      accordion.collapse(1);
       this.app.shell.add(playgroundSidebar, 'right', { rank: 650 });
 
       app.shell.currentChanged?.connect(() => {
