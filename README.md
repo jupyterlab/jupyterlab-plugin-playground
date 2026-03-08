@@ -1,7 +1,7 @@
 # JupyterLab Plugin Playground
 
-[![Github Actions Status](https://github.com/jupyterlab/jupyterlab-plugin-playground/workflows/Build/badge.svg)](https://github.com/jupyterlab/jupyterlab-plugin-playground/actions/workflows/build.yml)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyterlab/jupyterlab-plugin-playground/main?urlpath=lab)
+[![Github Actions Status](https://github.com/jupyterlab/plugin-playground/workflows/Build/badge.svg)](https://github.com/jupyterlab/plugin-playground/actions/workflows/build.yml)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jupyterlab/plugin-playground/main?urlpath=lab)
 [![JupyterLite](https://jupyterlite.rtfd.io/en/latest/_static/badge-launch.svg)](https://jupyterlab-plugin-playground.readthedocs.io/en/latest/lite/lab/)
 
 A JupyterLab extension to write and load simple JupyterLab plugins inside JupyterLab.
