@@ -46,6 +46,14 @@ import { ExampleSidebar } from './example-sidebar';
 
 import { tokenSidebarIcon } from './icons';
 
+import {
+  fileModelToText,
+  getDirectoryModel,
+  getFileModel,
+  IFileModel,
+  normalizeContentsPath
+} from './contents';
+
 import { Token } from '@lumino/coreutils';
 
 import { AccordionPanel } from '@lumino/widgets';
@@ -101,17 +109,6 @@ interface IPrivatePluginData {
   };
 }
 
-type IDirectoryModel = Contents.IModel & {
-  type: 'directory';
-  content: Contents.IModel[];
-};
-
-type IFileModel = Contents.IModel & {
-  type: 'file';
-  content: unknown;
-  format?: string | null;
-};
-
 const EXTENSION_EXAMPLES_ROOT = 'extension-examples';
 
 class PluginPlayground {
@@ -132,6 +129,7 @@ class PluginPlayground {
 
     app.commands.addCommand(CommandIDs.loadCurrentAsExtension, {
       label: 'Load Current File As Extension',
+      describedBy: { args: null },
       icon: extensionIcon,
       isEnabled: () =>
         editorTracker.currentWidget !== null &&
@@ -154,6 +152,7 @@ class PluginPlayground {
     app.commands.addCommand(CommandIDs.createNewFile, {
       label: 'TypeScript File (Playground)',
       caption: 'Create a new TypeScript file',
+      describedBy: { args: null },
       icon: extensionIcon,
       execute: async args => {
         const model = await app.commands.execute('docmanager:new-untitled', {
@@ -444,7 +443,7 @@ class PluginPlayground {
 
   private async _openExtensionExample(examplePath: string): Promise<void> {
     await this.app.commands.execute('docmanager:open', {
-      path: this._normalizeContentsPath(examplePath),
+      path: normalizeContentsPath(examplePath),
       factory: 'Editor'
     });
   }
@@ -452,15 +451,15 @@ class PluginPlayground {
   private async _discoverExtensionExamples(): Promise<
     ReadonlyArray<ExampleSidebar.IExampleRecord>
   > {
-    const rootDirectory = await this._getDirectoryModel(
+    const rootDirectory = await getDirectoryModel(
+      this.app.serviceManager,
       EXTENSION_EXAMPLES_ROOT
     );
     if (!rootDirectory) {
       return [];
     }
     const rootPath =
-      this._normalizeContentsPath(rootDirectory.path) ||
-      EXTENSION_EXAMPLES_ROOT;
+      normalizeContentsPath(rootDirectory.path) || EXTENSION_EXAMPLES_ROOT;
 
     const discovered: ExampleSidebar.IExampleRecord[] = [];
     for (const item of rootDirectory.content) {
@@ -485,29 +484,11 @@ class PluginPlayground {
     );
   }
 
-  private async _getDirectoryModel(
-    path: string
-  ): Promise<IDirectoryModel | null> {
-    for (const candidatePath of this._pathCandidates(path)) {
-      const model = await this._getContentsModel(candidatePath, {
-        content: true
-      });
-      if (
-        !model ||
-        model.type !== 'directory' ||
-        !Array.isArray(model.content)
-      ) {
-        continue;
-      }
-      return model as IDirectoryModel;
-    }
-    return null;
-  }
-
   private async _findExampleEntrypoint(
     directoryPath: string
   ): Promise<string | null> {
-    const srcDirectory = await this._getDirectoryModel(
+    const srcDirectory = await getDirectoryModel(
+      this.app.serviceManager,
       this._joinPath(directoryPath, 'src')
     );
     if (!srcDirectory) {
@@ -521,7 +502,7 @@ class PluginPlayground {
     if (!entrypoint) {
       return null;
     }
-    return this._normalizeContentsPath(
+    return normalizeContentsPath(
       this._joinPath(srcDirectory.path, entrypoint.name)
     );
   }
@@ -530,7 +511,10 @@ class PluginPlayground {
     directoryPath: string
   ): Promise<string> {
     const packageJsonPath = this._joinPath(directoryPath, 'package.json');
-    const packageJson = await this._getFileModel(packageJsonPath);
+    const packageJson = await getFileModel(
+      this.app.serviceManager,
+      packageJsonPath
+    );
     if (!packageJson) {
       return this._fallbackExampleDescription;
     }
@@ -548,112 +532,34 @@ class PluginPlayground {
 
   private _joinPath(base: string, child: string): string {
     const normalizedBase = base.replace(/\/+$/g, '');
-    const normalizedChild = this._normalizeContentsPath(child);
+    const normalizedChild = normalizeContentsPath(child);
     if (!normalizedBase) {
       return normalizedChild;
     }
     return `${normalizedBase}/${normalizedChild}`;
   }
 
-  private async _getFileModel(path: string): Promise<IFileModel | null> {
-    for (const candidatePath of this._pathCandidates(path)) {
-      const model = await this._getContentsModel(candidatePath, {
-        content: true
-      });
-      if (!model || model.type !== 'file') {
-        continue;
-      }
-      if (model.content !== null) {
-        return model as IFileModel;
-      }
-
-      // Some jupyterlite setups need an explicit text request for file content.
-      const textModel = await this._getContentsModel(candidatePath, {
-        content: true,
-        format: 'text'
-      });
-      if (
-        textModel &&
-        textModel.type === 'file' &&
-        textModel.content !== null
-      ) {
-        return textModel as IFileModel;
-      }
-    }
-    return null;
-  }
-
   private _parseJsonObject(
     fileModel: IFileModel
   ): { description?: unknown } | null {
-    if (
-      fileModel.content !== null &&
-      typeof fileModel.content === 'object' &&
-      !Array.isArray(fileModel.content)
-    ) {
-      return fileModel.content as { description?: unknown };
-    }
-    if (typeof fileModel.content !== 'string') {
+    const raw = fileModelToText(fileModel);
+    if (raw === null) {
       return null;
     }
 
-    const tryParse = (raw: string): { description?: unknown } | null => {
-      try {
-        const parsed = JSON.parse(raw) as unknown;
-        if (
-          parsed !== null &&
-          typeof parsed === 'object' &&
-          !Array.isArray(parsed)
-        ) {
-          return parsed as { description?: unknown };
-        }
-      } catch {
-        return null;
-      }
-      return null;
-    };
-
-    const parsedText = tryParse(fileModel.content);
-    if (parsedText) {
-      return parsedText;
-    }
-
-    if (fileModel.format === 'base64') {
-      try {
-        const decoded = atob(fileModel.content);
-        return tryParse(decoded);
-      } catch {
-        return null;
-      }
-    }
-
-    return null;
-  }
-
-  private _pathCandidates(path: string): string[] {
-    // Jupyter Server vs JupyterLite can expose contents paths with different
-    // leading-slash conventions; try both forms to keep example discovery and
-    // file reads working in both environments.
-    const trimmed = this._normalizeContentsPath(path);
-    if (trimmed.length === 0) {
-      return [];
-    }
-    return [trimmed, `/${trimmed}`];
-  }
-
-  private _normalizeContentsPath(path: string | null | undefined): string {
-    return (path ?? '').replace(/^\/+/g, '');
-  }
-
-  private async _getContentsModel(
-    path: string,
-    options: Contents.IFetchOptions
-  ): Promise<Contents.IModel | null> {
     try {
-      return await this.app.serviceManager.contents.get(path, options);
+      const parsed = JSON.parse(raw) as unknown;
+      if (
+        parsed !== null &&
+        typeof parsed === 'object' &&
+        !Array.isArray(parsed)
+      ) {
+        return parsed as { description?: unknown };
+      }
     } catch {
       return null;
     }
+    return null;
   }
 
   private _populateTokenMap(): void {
@@ -839,6 +745,8 @@ class PluginPlayground {
  */
 const plugin: JupyterFrontEndPlugin<void> = {
   id: '@jupyterlab/plugin-playground:plugin',
+  description:
+    'Provide a playground for developing and testing JupyterLab plugins.',
   autoStart: true,
   requires: [ISettingRegistry, ICommandPalette, IEditorTracker],
   optional: [ILauncher, IDocumentManager],

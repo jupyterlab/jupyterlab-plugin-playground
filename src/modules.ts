@@ -9,6 +9,8 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@codemirror/state') as any;
     case '@codemirror/view':
       return import('@codemirror/view') as any;
+    case '@jupyter-notebook/application':
+      return import('@jupyter-notebook/application') as any;
     case '@jupyter-widgets/base':
       return import('@jupyter-widgets/base') as any;
     case '@jupyter/collaborative-drive':
@@ -151,10 +153,14 @@ export function loadKnownModule(name: string): Promise<IModule | null> {
       return import('@lumino/virtualdom') as any;
     case '@lumino/widgets':
       return import('@lumino/widgets') as any;
+    case '@rjsf/utils':
+      return import('@rjsf/utils') as any;
     case 'react':
       return import('react') as any;
     case 'react-dom':
       return import('react-dom') as any;
+    case 'yjs':
+      return import('yjs') as any;
     default:
       return Promise.resolve(null);
   }

@@ -11,6 +11,8 @@ import { IRequireJS } from './requirejs';
 
 import { IModule, IModuleMember } from './types';
 
+import { readContentsFileAsText } from './contents';
+
 export namespace PluginLoader {
   export interface IOptions {
     transpiler: PluginTranspiler;
@@ -72,13 +74,12 @@ export class PluginLoader {
     ];
     for (const path of candidatePaths) {
       console.log(`Looking for schema in ${path}`);
-      try {
-        const file = await serviceManager.contents.get(path);
+      const schema = await readContentsFileAsText(serviceManager, path);
+      if (schema !== null) {
         console.log(`Found schema in ${path}`);
-        return file.content;
-      } catch (e) {
-        console.log(`Did not find schema in ${path}`);
+        return schema;
       }
+      console.log(`Did not find schema in ${path}`);
     }
     return null;
   }
