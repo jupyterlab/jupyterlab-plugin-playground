@@ -310,17 +310,23 @@ class PluginPlayground {
       }
       return;
     }
-    const plugin = this._ensureDeactivateSupport(result.plugin);
+    const plugins = result.plugins.map(plugin =>
+      this._ensureDeactivateSupport(plugin)
+    );
 
-    if (result.schema) {
+    for (const plugin of plugins) {
+      const schema = result.schemas[plugin.id];
+      if (!schema) {
+        continue;
+      }
       // TODO: this is mostly fine to get the menus and toolbars, but:
       // - transforms are not applied
       // - any refresh from the server might overwrite the data
       // - it is not a good long term solution in general
       this.settingRegistry.plugins[plugin.id] = {
         id: plugin.id,
-        schema: JSON.parse(result.schema),
-        raw: result.schema,
+        schema: JSON.parse(schema),
+        raw: schema,
         data: {
           composite: {},
           user: {}
@@ -332,9 +338,15 @@ class PluginPlayground {
       ).emit(plugin.id);
     }
 
-    await this._deactivateAndDeregisterPlugin(plugin.id);
-    this.app.registerPlugin(plugin);
-    if (plugin.autoStart) {
+    for (const plugin of plugins) {
+      await this._deactivateAndDeregisterPlugin(plugin.id);
+      this.app.registerPlugin(plugin);
+    }
+
+    for (const plugin of plugins) {
+      if (!plugin.autoStart) {
+        continue;
+      }
       try {
         await this.app.activatePlugin(plugin.id);
       } catch (e) {

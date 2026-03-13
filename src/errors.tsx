@@ -4,7 +4,7 @@ import { PluginLoader } from './loader';
 
 export function formatErrorWithResult(
   error: Error,
-  result: Omit<PluginLoader.IResult, 'plugin'>
+  result: Omit<PluginLoader.IResult, 'plugins'>
 ): JSX.Element {
   return (
     <div>
