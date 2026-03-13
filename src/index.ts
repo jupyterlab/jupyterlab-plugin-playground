@@ -347,6 +347,15 @@ class PluginPlayground {
       if (!plugin.autoStart) {
         continue;
       }
+      const missingRequiredTokens = this._missingRequiredTokens(plugin);
+      if (missingRequiredTokens.length > 0) {
+        console.warn(
+          `Skipping plugin ${
+            plugin.id
+          }: missing required services ${missingRequiredTokens.join(', ')}`
+        );
+        continue;
+      }
       try {
         await this.app.activatePlugin(plugin.id);
       } catch (e) {
@@ -357,6 +366,20 @@ class PluginPlayground {
         return;
       }
     }
+  }
+
+  private _missingRequiredTokens(
+    plugin: IPlugin<JupyterFrontEnd, unknown>
+  ): string[] {
+    try {
+      this._populateTokenMap();
+    } catch {
+      return (plugin.requires ?? []).map(token => token.name);
+    }
+
+    return (plugin.requires ?? [])
+      .filter(token => !this._tokenMap.has(token.name))
+      .map(token => token.name);
   }
 
   private _ensureDeactivateSupport(
