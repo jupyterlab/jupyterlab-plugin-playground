@@ -11,8 +11,6 @@ const TEST_FILE = 'playground-integration-test.ts';
 const PLAYGROUND_SIDEBAR_ID = 'jp-plugin-playground-sidebar';
 const TOKEN_SECTION_ID = 'jp-plugin-token-sidebar';
 const EXAMPLE_SECTION_ID = 'jp-plugin-example-sidebar';
-const TOKEN_SECTION_LABEL = 'Service Tokens';
-const EXAMPLE_SECTION_LABEL = 'Extension Examples';
 
 test.use({ autoGoto: false });
 
@@ -37,8 +35,7 @@ export default plugin;
 
 async function openSidebarPanel(
   page: IJupyterLabPageFixture,
-  sectionId?: string,
-  sectionLabel?: string
+  sectionId?: string
 ): Promise<Locator> {
   const sidebarTab = page.sidebar.getTabLocator(PLAYGROUND_SIDEBAR_ID);
   await expect(sidebarTab).toBeVisible();
@@ -53,18 +50,6 @@ async function openSidebarPanel(
   }
 
   const section = panel.locator(`#${sectionId}`);
-  if (!(await section.isVisible())) {
-    if (!sectionLabel) {
-      throw new Error(
-        `Missing section label for sidebar section "${sectionId}"`
-      );
-    }
-    const sectionTitle = panel
-      .locator('.lm-AccordionPanel-title')
-      .filter({ hasText: sectionLabel });
-    await expect(sectionTitle).toBeVisible();
-    await sectionTitle.click();
-  }
   await expect(section).toBeVisible();
   return section;
 }
@@ -142,11 +127,7 @@ test('opens a dummy extension example from the sidebar', async ({ page }) => {
   );
 
   await page.goto();
-  const section = await openSidebarPanel(
-    page,
-    EXAMPLE_SECTION_ID,
-    EXAMPLE_SECTION_LABEL
-  );
+  const section = await openSidebarPanel(page, EXAMPLE_SECTION_ID);
 
   const filterInput = section.getByPlaceholder('Filter extension examples');
   await expect(filterInput).toBeVisible();
@@ -226,11 +207,7 @@ test('opens token sidebar, shows tokens, and filters by exact token', async ({
   page
 }) => {
   await page.goto();
-  const section = await openSidebarPanel(
-    page,
-    TOKEN_SECTION_ID,
-    TOKEN_SECTION_LABEL
-  );
+  const section = await openSidebarPanel(page, TOKEN_SECTION_ID);
 
   const tokenListItems = section.locator('.jp-PluginPlayground-listItem');
   await expect(tokenListItems.first()).toBeVisible();
@@ -251,11 +228,7 @@ test('opens token sidebar, shows tokens, and filters by exact token', async ({
 
 test('token sidebar copy button shows copied state', async ({ page }) => {
   await page.goto();
-  const section = await openSidebarPanel(
-    page,
-    TOKEN_SECTION_ID,
-    TOKEN_SECTION_LABEL
-  );
+  const section = await openSidebarPanel(page, TOKEN_SECTION_ID);
 
   const tokenListItem = section.locator('.jp-PluginPlayground-listItem');
   await expect(tokenListItem.first()).toBeVisible();
@@ -283,11 +256,7 @@ test('token sidebar inserts import statement into active editor', async ({
   await page.filebrowser.open(editorPath);
   expect(await page.activity.activateTab('token-sidebar-import.ts')).toBe(true);
 
-  const section = await openSidebarPanel(
-    page,
-    TOKEN_SECTION_ID,
-    TOKEN_SECTION_LABEL
-  );
+  const section = await openSidebarPanel(page, TOKEN_SECTION_ID);
 
   const tokenName = await findImportableToken(section);
   const filterInput = section.getByPlaceholder('Filter token strings');
