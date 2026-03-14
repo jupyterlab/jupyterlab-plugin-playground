@@ -64,7 +64,7 @@
   overflow-wrap: anywhere;
 }
 
-.jp-PluginPlayground-tokenActions {
+.jp-PluginPlayground-actions {
   display: inline-flex;
   gap: 4px;
 }
@@ -107,6 +107,16 @@
   display: block;
   height: 14px;
   width: 14px;
+}
+
+.jp-PluginPlayground-exampleActionIcon {
+  height: 16px;
+  width: 16px;
+}
+
+.jp-PluginPlayground-exampleActionIcon svg {
+  height: 16px;
+  width: 16px;
 }
 
 .jp-PluginPlayground-description {
