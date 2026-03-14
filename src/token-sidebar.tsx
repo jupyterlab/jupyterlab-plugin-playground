@@ -35,6 +35,7 @@ export class TokenSidebar extends ReactWidget {
     this._tokens = options.tokens;
     this._onInsertImport = options.onInsertImport;
     this._isImportEnabled = options.isImportEnabled;
+    this.addClass('jp-PluginPlayground-sidebar');
     this.addClass('jp-PluginPlayground-tokenSidebar');
   }
 
@@ -58,35 +59,35 @@ export class TokenSidebar extends ReactWidget {
         : this._tokens;
 
     return (
-      <div className="jp-PluginPlayground-tokenSidebarInner">
+      <div className="jp-PluginPlayground-sidebarInner jp-PluginPlayground-tokenSidebarInner">
         <input
-          className="jp-PluginPlayground-tokenFilter"
+          className="jp-PluginPlayground-filter jp-PluginPlayground-tokenFilter"
           type="search"
           placeholder="Filter token strings"
           value={this._query}
           onChange={this._onQueryChange}
         />
-        <p className="jp-PluginPlayground-tokenCount">
+        <p className="jp-PluginPlayground-count jp-PluginPlayground-tokenCount">
           {filteredTokens.length} of {this._tokens.length} token strings
         </p>
         {filteredTokens.length === 0 ? (
-          <p className="jp-PluginPlayground-tokenCount">
+          <p className="jp-PluginPlayground-count jp-PluginPlayground-tokenCount">
             No matching token strings.
           </p>
         ) : (
-          <ul className="jp-PluginPlayground-tokenList">
+          <ul className="jp-PluginPlayground-list jp-PluginPlayground-tokenList">
             {filteredTokens.map(token => (
               <li
                 key={token.name}
-                className="jp-PluginPlayground-tokenListItem"
+                className="jp-PluginPlayground-listItem jp-PluginPlayground-tokenListItem"
               >
-                <div className="jp-PluginPlayground-tokenRow">
-                  <code className="jp-PluginPlayground-tokenString">
+                <div className="jp-PluginPlayground-row jp-PluginPlayground-tokenRow">
+                  <code className="jp-PluginPlayground-entryLabel jp-PluginPlayground-tokenString">
                     {token.name}
                   </code>
                   <div className="jp-PluginPlayground-tokenActions">
                     <button
-                      className="jp-Button jp-mod-styled jp-mod-minimal jp-PluginPlayground-importButton"
+                      className="jp-Button jp-mod-styled jp-mod-minimal jp-PluginPlayground-actionButton jp-PluginPlayground-importButton"
                       type="button"
                       onClick={() => {
                         void this._insertImport(token.name);
@@ -102,7 +103,7 @@ export class TokenSidebar extends ReactWidget {
                       })}
                     </button>
                     <button
-                      className="jp-Button jp-mod-styled jp-mod-minimal jp-PluginPlayground-copyButton"
+                      className="jp-Button jp-mod-styled jp-mod-minimal jp-PluginPlayground-actionButton jp-PluginPlayground-copyButton"
                       type="button"
                       onClick={() => {
                         void this._copyTokenName(token.name);
@@ -132,7 +133,7 @@ export class TokenSidebar extends ReactWidget {
                   </div>
                 </div>
                 {token.description ? (
-                  <p className="jp-PluginPlayground-tokenDescription">
+                  <p className="jp-PluginPlayground-description jp-PluginPlayground-tokenDescription">
                     {token.description}
                   </p>
                 ) : null}

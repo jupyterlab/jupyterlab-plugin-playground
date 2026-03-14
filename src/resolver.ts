@@ -10,11 +10,13 @@ import { IRequireJS } from './requirejs';
 
 import { IModule, IModuleMember } from './types';
 
-import { ServiceManager, Contents } from '@jupyterlab/services';
+import { ServiceManager } from '@jupyterlab/services';
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { formatCDNConsentDialog } from './dialogs';
+
+import { fileModelToText, getFileModel } from './contents';
 
 function handleImportError(error: Error, module: string) {
   return showDialog({
@@ -216,36 +218,51 @@ export class ImportResolver {
       );
     }
     const base = PathExt.dirname(path);
-    const candidatePaths = [
-      PathExt.join(base, module + '.ts'),
-      PathExt.join(base, module + '.tsx')
-    ];
-    if (module.endsWith('.svg')) {
-      candidatePaths.push(PathExt.join(base, module));
-    }
+    const candidatePaths = this._localImportCandidates(base, module);
 
     for (const candidatePath of candidatePaths) {
-      const directory = await serviceManager.contents.get(
-        PathExt.dirname(candidatePath)
-      );
-      const files = directory.content as Contents.IModel[];
-      const filePaths = new Set(files.map(file => file.path));
-
-      if (filePaths.has(candidatePath)) {
-        console.log(`Resolved ${module} to ${candidatePath}`);
-        const file = await serviceManager.contents.get(candidatePath);
-        if (candidatePath.endsWith('.svg')) {
-          return {
-            default: file.content
-          };
-        }
-        return await this._options.dynamicLoader(file.content);
+      const file = await getFileModel(serviceManager, candidatePath);
+      if (!file) {
+        continue;
       }
+
+      console.log(`Resolved ${module} to ${file.path}`);
+      const content = fileModelToText(file);
+      if (content === null) {
+        continue;
+      }
+
+      if (file.path.endsWith('.svg')) {
+        return {
+          default: content as unknown as IModuleMember
+        };
+      }
+
+      return await this._options.dynamicLoader(content);
     }
     console.warn(
       `Could not resolve ${module}, candidate paths:`,
       candidatePaths
     );
     return null;
+  }
+
+  private _localImportCandidates(basePath: string, module: string): string[] {
+    const baseCandidate = PathExt.join(basePath, module);
+    const extension = PathExt.extname(baseCandidate);
+    const candidates = new Set<string>();
+
+    if (extension) {
+      candidates.add(baseCandidate);
+    } else {
+      candidates.add(`${baseCandidate}.ts`);
+      candidates.add(`${baseCandidate}.tsx`);
+      candidates.add(`${baseCandidate}.js`);
+      candidates.add(PathExt.join(baseCandidate, 'index.ts'));
+      candidates.add(PathExt.join(baseCandidate, 'index.tsx'));
+      candidates.add(PathExt.join(baseCandidate, 'index.js'));
+    }
+
+    return Array.from(candidates);
   }
 }

@@ -1,0 +1,3 @@
+[submodule "extension-examples"]
+	path = extension-examples
+	url = https://github.com/jupyterlab/extension-examples.git

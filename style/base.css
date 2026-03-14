@@ -4,13 +4,13 @@
     https://jupyterlab.readthedocs.io/en/stable/developer/css.html
 */
 
-.jp-PluginPlayground-tokenSidebar {
+.jp-PluginPlayground-sidebar {
   background: var(--jp-layout-color1);
   color: var(--jp-ui-font-color1);
   height: 100%;
 }
 
-.jp-PluginPlayground-tokenSidebarInner {
+.jp-PluginPlayground-sidebarInner {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -20,13 +20,13 @@
   padding: var(--jp-code-padding);
 }
 
-.jp-PluginPlayground-tokenCount {
+.jp-PluginPlayground-count {
   color: var(--jp-ui-font-color2);
   font-size: var(--jp-ui-font-size0);
   margin: 5px 0px;
 }
 
-.jp-PluginPlayground-tokenFilter {
+.jp-PluginPlayground-filter {
   background: var(--jp-layout-color1);
   border: var(--jp-border-width) solid var(--jp-border-color1);
   border-radius: var(--jp-border-radius);
@@ -35,7 +35,7 @@
   padding: 4px 8px;
 }
 
-.jp-PluginPlayground-tokenList {
+.jp-PluginPlayground-list {
   display: flex;
   flex-direction: column;
   gap: var(--jp-layout-spacing-standard);
@@ -44,21 +44,21 @@
   padding: 0;
 }
 
-.jp-PluginPlayground-tokenListItem {
+.jp-PluginPlayground-listItem {
   border: var(--jp-border-width) solid var(--jp-border-color2);
   border-radius: var(--jp-border-radius);
   margin: 0;
   padding: 8px;
 }
 
-.jp-PluginPlayground-tokenRow {
+.jp-PluginPlayground-row {
   align-items: center;
   display: flex;
   gap: 8px;
   justify-content: space-between;
 }
 
-.jp-PluginPlayground-tokenString {
+.jp-PluginPlayground-entryLabel {
   display: block;
   flex: 1 1 auto;
   overflow-wrap: anywhere;
@@ -69,8 +69,7 @@
   gap: 4px;
 }
 
-.jp-PluginPlayground-copyButton,
-.jp-PluginPlayground-importButton {
+.jp-PluginPlayground-actionButton {
   align-items: center;
   background: var(--jp-layout-color2);
   border: var(--jp-border-width) solid var(--jp-border-color1);
@@ -86,13 +85,12 @@
   justify-content: center;
 }
 
-.jp-PluginPlayground-copyButton:hover,
-.jp-PluginPlayground-importButton:hover {
+.jp-PluginPlayground-actionButton:hover {
   background: var(--jp-layout-color3);
 }
 
-.jp-PluginPlayground-copyButton:focus-visible,
-.jp-PluginPlayground-importButton:focus-visible {
+.jp-PluginPlayground-actionButton:focus-visible,
+.jp-PluginPlayground-filter:focus-visible {
   outline: var(--jp-border-width) solid var(--jp-brand-color1);
   outline-offset: 1px;
 }
@@ -111,9 +109,17 @@
   width: 14px;
 }
 
-.jp-PluginPlayground-tokenDescription {
+.jp-PluginPlayground-description {
   color: var(--jp-ui-font-color2);
   font-size: var(--jp-ui-font-size0);
   margin: 8px 0 0;
   white-space: normal;
+}
+
+.jp-PluginPlayground-tokenString {
+  font-family: var(--jp-code-font-family);
+}
+
+.jp-PluginPlayground-exampleError {
+  color: var(--jp-error-color1);
 }
