@@ -20,6 +20,23 @@
   padding: var(--jp-code-padding);
 }
 
+.jp-PluginPlayground-viewToggle {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.jp-PluginPlayground-viewButton {
+  justify-content: center;
+  width: 100%;
+}
+
+.jp-PluginPlayground-viewButton.jp-mod-active {
+  background: var(--jp-brand-color1);
+  border-color: var(--jp-brand-color1);
+  color: var(--jp-ui-inverse-font-color1);
+}
+
 .jp-PluginPlayground-count {
   color: var(--jp-ui-font-color2);
   font-size: var(--jp-ui-font-size0);
