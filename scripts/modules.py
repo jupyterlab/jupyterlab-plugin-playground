@@ -5,8 +5,10 @@ import jupyterlab
 # Additional modules to include in the generated known-module map.
 # Keep this as an explicit supplement to the modules discovered from CoreConfig.
 EXTRA_MODULES = {
+    '@rjsf/utils',
     '@jupyter/collaborative-drive',
     '@jupyter/docprovider',
+    '@jupyter-notebook/application',
     '@jupyterlab/attachments',
     '@jupyterlab/cells',
     '@jupyterlab/csvviewer',
@@ -17,15 +19,15 @@ EXTRA_MODULES = {
     '@jupyterlab/property-inspector',
     '@jupyterlab/running',
     '@jupyter-widgets/base',
-    '@lumino/datagrid'
+    '@lumino/datagrid',
+    'yjs'
 }
 
 # modules which are implementation detail and unlikely to be used directly in playground
 IGNORED_MODULES = {
     '@jupyterlab/nbconvert-css',
     '@microsoft/fast-element',
-    '@microsoft/fast-foundation',
-    'yjs'
+    '@microsoft/fast-foundation'
 }
 
 TEMPLATE = """\

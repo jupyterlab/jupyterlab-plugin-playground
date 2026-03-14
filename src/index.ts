@@ -22,9 +22,11 @@ import { FileEditor, IEditorTracker } from '@jupyterlab/fileeditor';
 
 import { ILauncher } from '@jupyterlab/launcher';
 
-import { extensionIcon } from '@jupyterlab/ui-components';
+import { extensionIcon, SidePanel } from '@jupyterlab/ui-components';
 
 import { IDocumentManager } from '@jupyterlab/docmanager';
+
+import { Contents } from '@jupyterlab/services';
 
 import { PluginLoader, PluginLoadingError } from './loader';
 
@@ -40,9 +42,23 @@ import { IRequireJS, RequireJSLoader } from './requirejs';
 
 import { TokenSidebar } from './token-sidebar';
 
+import { ExampleSidebar } from './example-sidebar';
+
 import { tokenSidebarIcon } from './icons';
 
+import {
+  fileModelToText,
+  getDirectoryModel,
+  getFileModel,
+  IFileModel,
+  normalizeContentsPath
+} from './contents';
+
 import { Token } from '@lumino/coreutils';
+
+import { AccordionPanel } from '@lumino/widgets';
+
+import { IPlugin } from '@lumino/application';
 
 namespace CommandIDs {
   export const createNewFile = 'plugin-playground:create-new-plugin';
@@ -93,6 +109,8 @@ interface IPrivatePluginData {
   };
 }
 
+const EXTENSION_EXAMPLES_ROOT = 'extension-examples';
+
 class PluginPlayground {
   constructor(
     protected app: JupyterFrontEnd,
@@ -111,6 +129,7 @@ class PluginPlayground {
 
     app.commands.addCommand(CommandIDs.loadCurrentAsExtension, {
       label: 'Load Current File As Extension',
+      describedBy: { args: null },
       icon: extensionIcon,
       isEnabled: () =>
         editorTracker.currentWidget !== null &&
@@ -133,6 +152,7 @@ class PluginPlayground {
     app.commands.addCommand(CommandIDs.createNewFile, {
       label: 'TypeScript File (Playground)',
       caption: 'Create a new TypeScript file',
+      describedBy: { args: null },
       icon: extensionIcon,
       execute: async args => {
         const model = await app.commands.execute('docmanager:new-untitled', {
@@ -178,9 +198,29 @@ class PluginPlayground {
         isImportEnabled: this._canInsertImport.bind(this)
       });
       tokenSidebar.id = 'jp-plugin-token-sidebar';
+      tokenSidebar.title.label = 'Service Tokens';
       tokenSidebar.title.caption = 'Available service token strings for plugin';
       tokenSidebar.title.icon = tokenSidebarIcon;
-      this.app.shell.add(tokenSidebar, 'right', { rank: 650 });
+
+      const exampleSidebar = new ExampleSidebar({
+        fetchExamples: this._discoverExtensionExamples.bind(this),
+        onOpenExample: this._openExtensionExample.bind(this)
+      });
+      exampleSidebar.id = 'jp-plugin-example-sidebar';
+      exampleSidebar.title.label = 'Extension Examples';
+      exampleSidebar.title.caption =
+        'Browse plugin examples from jupyterlab/extension-examples';
+
+      const playgroundSidebar = new SidePanel();
+      playgroundSidebar.id = 'jp-plugin-playground-sidebar';
+      playgroundSidebar.title.caption = 'Plugin Playground helper panels';
+      playgroundSidebar.title.icon = tokenSidebarIcon;
+      playgroundSidebar.addWidget(tokenSidebar);
+      playgroundSidebar.addWidget(exampleSidebar);
+      (playgroundSidebar.content as AccordionPanel).expand(0);
+      (playgroundSidebar.content as AccordionPanel).expand(1);
+      this.app.shell.add(playgroundSidebar, 'right', { rank: 650 });
+
       app.shell.currentChanged?.connect(() => {
         tokenSidebar.update();
       });
@@ -270,17 +310,23 @@ class PluginPlayground {
       }
       return;
     }
-    const plugin = result.plugin;
+    const plugins = result.plugins.map(plugin =>
+      this._ensureDeactivateSupport(plugin)
+    );
 
-    if (result.schema) {
+    for (const plugin of plugins) {
+      const schema = result.schemas[plugin.id];
+      if (!schema) {
+        continue;
+      }
       // TODO: this is mostly fine to get the menus and toolbars, but:
       // - transforms are not applied
       // - any refresh from the server might overwrite the data
       // - it is not a good long term solution in general
       this.settingRegistry.plugins[plugin.id] = {
         id: plugin.id,
-        schema: JSON.parse(result.schema),
-        raw: result.schema,
+        schema: JSON.parse(schema),
+        raw: schema,
         data: {
           composite: {},
           user: {}
@@ -292,12 +338,24 @@ class PluginPlayground {
       ).emit(plugin.id);
     }
 
-    // Unregister plugin if already registered.
-    if (this.app.hasPlugin(plugin.id)) {
-      this.app.deregisterPlugin(plugin.id, true);
+    for (const plugin of plugins) {
+      await this._deactivateAndDeregisterPlugin(plugin.id);
+      this.app.registerPlugin(plugin);
     }
-    this.app.registerPlugin(plugin);
-    if (plugin.autoStart) {
+
+    for (const plugin of plugins) {
+      if (!plugin.autoStart) {
+        continue;
+      }
+      const missingRequiredTokens = this._missingRequiredTokens(plugin);
+      if (missingRequiredTokens.length > 0) {
+        console.warn(
+          `Skipping plugin ${
+            plugin.id
+          }: missing required services ${missingRequiredTokens.join(', ')}`
+        );
+        continue;
+      }
       try {
         await this.app.activatePlugin(plugin.id);
       } catch (e) {
@@ -310,10 +368,232 @@ class PluginPlayground {
     }
   }
 
+  private _missingRequiredTokens(
+    plugin: IPlugin<JupyterFrontEnd, unknown>
+  ): string[] {
+    try {
+      this._populateTokenMap();
+    } catch {
+      return (plugin.requires ?? []).map(token => token.name);
+    }
+
+    return (plugin.requires ?? [])
+      .filter(token => !this._tokenMap.has(token.name))
+      .map(token => token.name);
+  }
+
+  private _ensureDeactivateSupport(
+    plugin: IPlugin<JupyterFrontEnd, unknown>
+  ): IPlugin<JupyterFrontEnd, unknown> {
+    const trackedCommandDisposables: Array<{ dispose: () => void }> = [];
+    const originalActivate = plugin.activate;
+    const originalDeactivate = plugin.deactivate;
+
+    plugin.activate = async (app: JupyterFrontEnd, ...services: unknown[]) => {
+      const originalAddCommand = app.commands.addCommand.bind(app.commands);
+      app.commands.addCommand = ((id, options) => {
+        const disposable = originalAddCommand(id, options);
+        trackedCommandDisposables.push(disposable);
+        return disposable;
+      }) as typeof app.commands.addCommand;
+
+      try {
+        return await originalActivate(app, ...services);
+      } catch (error) {
+        this._disposeTrackedCommands(trackedCommandDisposables);
+        throw error;
+      } finally {
+        app.commands.addCommand = originalAddCommand;
+      }
+    };
+
+    plugin.deactivate = async (
+      app: JupyterFrontEnd,
+      ...services: unknown[]
+    ) => {
+      try {
+        if (originalDeactivate) {
+          await originalDeactivate(app, ...services);
+        }
+      } finally {
+        this._disposeTrackedCommands(trackedCommandDisposables);
+      }
+    };
+
+    return plugin;
+  }
+
+  private _disposeTrackedCommands(
+    trackedCommandDisposables: Array<{ dispose: () => void }>
+  ): void {
+    while (trackedCommandDisposables.length > 0) {
+      const disposable = trackedCommandDisposables.pop();
+      if (!disposable) {
+        continue;
+      }
+      try {
+        disposable.dispose();
+      } catch (error) {
+        console.warn('Failed to dispose plugin command registration', error);
+      }
+    }
+  }
+
+  private async _deactivateAndDeregisterPlugin(
+    pluginId: string
+  ): Promise<void> {
+    if (!this.app.hasPlugin(pluginId)) {
+      return;
+    }
+
+    if (this.app.isPluginActivated(pluginId)) {
+      try {
+        await this.app.deactivatePlugin(pluginId);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown deactivation error';
+        await showDialog({
+          title: 'Plugin deactivation failed',
+          body:
+            `Could not deactivate "${pluginId}" before reload. ` +
+            'Falling back to forced reload. Add `deactivate()` to the plugin ' +
+            'and dependent plugins for clean reruns. ' +
+            message,
+          buttons: [Dialog.okButton()]
+        });
+      }
+    }
+
+    if (this.app.hasPlugin(pluginId)) {
+      this.app.deregisterPlugin(pluginId, true);
+    }
+  }
+
   private async _getModule(url: string) {
     const response = await fetch(url);
     const jsBody = await response.text();
     this._loadPlugin(jsBody, null);
+  }
+
+  private async _openExtensionExample(examplePath: string): Promise<void> {
+    await this.app.commands.execute('docmanager:open', {
+      path: normalizeContentsPath(examplePath),
+      factory: 'Editor'
+    });
+  }
+
+  private async _discoverExtensionExamples(): Promise<
+    ReadonlyArray<ExampleSidebar.IExampleRecord>
+  > {
+    const rootDirectory = await getDirectoryModel(
+      this.app.serviceManager,
+      EXTENSION_EXAMPLES_ROOT
+    );
+    if (!rootDirectory) {
+      return [];
+    }
+    const rootPath =
+      normalizeContentsPath(rootDirectory.path) || EXTENSION_EXAMPLES_ROOT;
+
+    const discovered: ExampleSidebar.IExampleRecord[] = [];
+    for (const item of rootDirectory.content) {
+      if (item.type !== 'directory' || item.name.startsWith('.')) {
+        continue;
+      }
+      const exampleDirectory = this._joinPath(rootPath, item.name);
+      const entrypoint = await this._findExampleEntrypoint(exampleDirectory);
+      if (!entrypoint) {
+        continue;
+      }
+      const description = await this._readExampleDescription(exampleDirectory);
+      discovered.push({
+        name: item.name,
+        path: entrypoint,
+        description
+      });
+    }
+
+    return discovered.sort((left, right) =>
+      left.name.localeCompare(right.name)
+    );
+  }
+
+  private async _findExampleEntrypoint(
+    directoryPath: string
+  ): Promise<string | null> {
+    const srcDirectory = await getDirectoryModel(
+      this.app.serviceManager,
+      this._joinPath(directoryPath, 'src')
+    );
+    if (!srcDirectory) {
+      return null;
+    }
+    const entrypoint = srcDirectory.content.find(
+      (item: Contents.IModel) =>
+        item.type === 'file' &&
+        (item.name === 'index.ts' || item.name === 'index.js')
+    );
+    if (!entrypoint) {
+      return null;
+    }
+    return normalizeContentsPath(
+      this._joinPath(srcDirectory.path, entrypoint.name)
+    );
+  }
+
+  private async _readExampleDescription(
+    directoryPath: string
+  ): Promise<string> {
+    const packageJsonPath = this._joinPath(directoryPath, 'package.json');
+    const packageJson = await getFileModel(
+      this.app.serviceManager,
+      packageJsonPath
+    );
+    if (!packageJson) {
+      return this._fallbackExampleDescription;
+    }
+    const packageData = this._parseJsonObject(packageJson);
+
+    if (packageData) {
+      const description = this._stringValue(packageData.description);
+      if (description) {
+        return description;
+      }
+    }
+
+    return this._fallbackExampleDescription;
+  }
+
+  private _joinPath(base: string, child: string): string {
+    const normalizedBase = base.replace(/\/+$/g, '');
+    const normalizedChild = normalizeContentsPath(child);
+    if (!normalizedBase) {
+      return normalizedChild;
+    }
+    return `${normalizedBase}/${normalizedChild}`;
+  }
+
+  private _parseJsonObject(
+    fileModel: IFileModel
+  ): { description?: unknown } | null {
+    const raw = fileModelToText(fileModel);
+    if (raw === null) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (
+        parsed !== null &&
+        typeof parsed === 'object' &&
+        !Array.isArray(parsed)
+      ) {
+        return parsed as { description?: unknown };
+      }
+    } catch {
+      return null;
+    }
+    return null;
   }
 
   private _populateTokenMap(): void {
@@ -488,6 +768,8 @@ class PluginPlayground {
     return !!(sourceModel && sourceModel.sharedModel);
   }
 
+  private readonly _fallbackExampleDescription =
+    'No description provided by this example.';
   private readonly _tokenMap = new Map<string, Token<string>>();
   private readonly _tokenDescriptionMap = new Map<string, string>();
 }
@@ -497,6 +779,8 @@ class PluginPlayground {
  */
 const plugin: JupyterFrontEndPlugin<void> = {
   id: '@jupyterlab/plugin-playground:plugin',
+  description:
+    'Provide a playground for developing and testing JupyterLab plugins.',
   autoStart: true,
   requires: [ISettingRegistry, ICommandPalette, IEditorTracker],
   optional: [ILauncher, IDocumentManager],

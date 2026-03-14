@@ -8,7 +8,9 @@ const CREATE_FILE_COMMAND = 'plugin-playground:create-new-plugin';
 const TEST_PLUGIN_ID = 'playground-integration-test:plugin';
 const TEST_TOGGLE_COMMAND = 'playground-integration-test:toggle';
 const TEST_FILE = 'playground-integration-test.ts';
-const TOKEN_SIDEBAR_ID = 'jp-plugin-token-sidebar';
+const PLAYGROUND_SIDEBAR_ID = 'jp-plugin-playground-sidebar';
+const TOKEN_SECTION_ID = 'jp-plugin-token-sidebar';
+const EXAMPLE_SECTION_ID = 'jp-plugin-example-sidebar';
 
 test.use({ autoGoto: false });
 
@@ -31,22 +33,29 @@ const plugin = {
 export default plugin;
 `;
 
-async function openTokenSidebarPanel(
-  page: IJupyterLabPageFixture
+async function openSidebarPanel(
+  page: IJupyterLabPageFixture,
+  sectionId?: string
 ): Promise<Locator> {
-  const tokenSidebarTab = page.sidebar.getTabLocator(TOKEN_SIDEBAR_ID);
-  await expect(tokenSidebarTab).toBeVisible();
-  await page.sidebar.openTab(TOKEN_SIDEBAR_ID);
+  const sidebarTab = page.sidebar.getTabLocator(PLAYGROUND_SIDEBAR_ID);
+  await expect(sidebarTab).toBeVisible();
+  await page.sidebar.openTab(PLAYGROUND_SIDEBAR_ID);
 
-  const sidebarSide = await page.sidebar.getTabPosition(TOKEN_SIDEBAR_ID);
+  const sidebarSide = await page.sidebar.getTabPosition(PLAYGROUND_SIDEBAR_ID);
   const panel = page.sidebar.getContentPanelLocator(sidebarSide ?? 'right');
   await expect(panel).toBeVisible();
-  await expect(panel).toHaveAttribute('id', TOKEN_SIDEBAR_ID);
-  return panel;
+  await expect(panel).toHaveAttribute('id', PLAYGROUND_SIDEBAR_ID);
+  if (!sectionId) {
+    return panel;
+  }
+
+  const section = panel.locator(`#${sectionId}`);
+  await expect(section).toBeVisible();
+  return section;
 }
 
 async function findImportableToken(panel: Locator): Promise<string> {
-  const tokenEntries = panel.locator('.jp-PluginPlayground-tokenString');
+  const tokenEntries = panel.locator('.jp-PluginPlayground-entryLabel');
   const count = await tokenEntries.count();
   for (let i = 0; i < count; i++) {
     const tokenName = (await tokenEntries.nth(i).innerText()).trim();
@@ -92,6 +101,52 @@ test('registers plugin playground commands', async ({ page }) => {
       return window.jupyterapp.commands.hasCommand(id);
     }, CREATE_FILE_COMMAND)
   ).resolves.toBe(true);
+});
+
+test('opens a dummy extension example from the sidebar', async ({ page }) => {
+  const integrationExampleName = 'integration-example';
+  const integrationExampleRoot = `extension-examples/${integrationExampleName}`;
+  const expectedPath = `${integrationExampleRoot}/src/index.ts`;
+
+  await page.contents.uploadContent(
+    JSON.stringify(
+      {
+        name: '@jupyterlab-examples/integration-example',
+        description: 'Integration test extension example'
+      },
+      null,
+      2
+    ),
+    'text',
+    `${integrationExampleRoot}/package.json`
+  );
+  await page.contents.uploadContent(
+    "const plugin = { id: 'integration-example:plugin', autoStart: true, activate: () => undefined }; export default plugin;\n",
+    'text',
+    expectedPath
+  );
+
+  await page.goto();
+  const section = await openSidebarPanel(page, EXAMPLE_SECTION_ID);
+
+  const filterInput = section.getByPlaceholder('Filter extension examples');
+  await expect(filterInput).toBeVisible();
+  await filterInput.fill(integrationExampleName);
+
+  const exampleItems = section.locator('.jp-PluginPlayground-listItem');
+  await expect(exampleItems).toHaveCount(1);
+  const openButton = exampleItems
+    .first()
+    .locator('.jp-PluginPlayground-exampleOpenButton');
+  await expect(openButton).toBeVisible();
+  await openButton.click();
+
+  await page.waitForFunction((pathToOpen: string) => {
+    const current = window.jupyterapp.shell
+      .currentWidget as FileEditorWidget | null;
+    const path = current?.context?.path;
+    return path === pathToOpen;
+  }, expectedPath);
 });
 
 test('loads current editor file as a plugin extension', async ({
@@ -152,30 +207,30 @@ test('opens token sidebar, shows tokens, and filters by exact token', async ({
   page
 }) => {
   await page.goto();
-  const panel = await openTokenSidebarPanel(page);
+  const section = await openSidebarPanel(page, TOKEN_SECTION_ID);
 
-  const tokenListItems = panel.locator('.jp-PluginPlayground-tokenListItem');
+  const tokenListItems = section.locator('.jp-PluginPlayground-listItem');
   await expect(tokenListItems.first()).toBeVisible();
   expect(await tokenListItems.count()).toBeGreaterThan(0);
 
   const firstToken = (
-    await panel.locator('.jp-PluginPlayground-tokenString').first().innerText()
+    await section.locator('.jp-PluginPlayground-entryLabel').first().innerText()
   ).trim();
   expect(firstToken.length).toBeGreaterThan(0);
 
-  const filterInput = panel.getByPlaceholder('Filter token strings');
+  const filterInput = section.getByPlaceholder('Filter token strings');
   await filterInput.fill(firstToken);
   await expect(tokenListItems).toHaveCount(1);
-  await expect(panel.locator('.jp-PluginPlayground-tokenString')).toHaveText([
+  await expect(section.locator('.jp-PluginPlayground-entryLabel')).toHaveText([
     firstToken
   ]);
 });
 
 test('token sidebar copy button shows copied state', async ({ page }) => {
   await page.goto();
-  const panel = await openTokenSidebarPanel(page);
+  const section = await openSidebarPanel(page, TOKEN_SECTION_ID);
 
-  const tokenListItem = panel.locator('.jp-PluginPlayground-tokenListItem');
+  const tokenListItem = section.locator('.jp-PluginPlayground-listItem');
   await expect(tokenListItem.first()).toBeVisible();
 
   const copyButton = tokenListItem
@@ -201,11 +256,12 @@ test('token sidebar inserts import statement into active editor', async ({
   await page.filebrowser.open(editorPath);
   expect(await page.activity.activateTab('token-sidebar-import.ts')).toBe(true);
 
-  const panel = await openTokenSidebarPanel(page);
-  const tokenName = await findImportableToken(panel);
-  const filterInput = panel.getByPlaceholder('Filter token strings');
+  const section = await openSidebarPanel(page, TOKEN_SECTION_ID);
+
+  const tokenName = await findImportableToken(section);
+  const filterInput = section.getByPlaceholder('Filter token strings');
   await filterInput.fill(tokenName);
-  const tokenListItem = panel.locator('.jp-PluginPlayground-tokenListItem');
+  const tokenListItem = section.locator('.jp-PluginPlayground-listItem');
   await expect(tokenListItem).toHaveCount(1);
 
   const importButton = tokenListItem.locator(

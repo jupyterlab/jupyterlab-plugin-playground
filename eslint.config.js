@@ -20,6 +20,7 @@ module.exports = [
       'src/modules.ts',
       'docs/content/**',
       'docs/_build/**',
+      'extension-examples/**',
       'ui-tests/test-results/**'
     ]
   },

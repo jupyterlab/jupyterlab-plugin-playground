@@ -52,8 +52,27 @@ SETTINGS = Path(sys.prefix) / "share/jupyter/lab/settings"
 SETTINGS.mkdir(parents=True, exist_ok=True)
 shutil.copy2("binder/overrides.json", SETTINGS / "overrides.json")
 
-# download examples
-_("git", "clone", "https://github.com/jupyterlab/extension-examples.git")
+# ensure examples are available (from submodule checkout or fallback clone)
+EXAMPLES = ROOT / "extension-examples"
+if (EXAMPLES / "README.md").exists():
+    print("Using extension examples from repository checkout/submodule.")
+else:
+    if EXAMPLES.exists() and (ROOT / ".git").exists():
+        print("Attempting to initialize extension examples submodule.")
+        subprocess.call(
+            [
+                "git",
+                "submodule",
+                "update",
+                "--init",
+                "--recursive",
+                "extension-examples",
+            ]
+        )
+    if EXAMPLES.exists() and not (EXAMPLES / "README.md").exists():
+        shutil.rmtree(EXAMPLES)
+    if not EXAMPLES.exists():
+        _("git", "clone", "https://github.com/jupyterlab/extension-examples.git")
 
 print("JupyterLab with @jupyterlab/plugin-playground is ready to run with:\n")
 print("\tjupyter lab\n")
