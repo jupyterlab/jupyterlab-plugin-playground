@@ -4,6 +4,7 @@ import type { IJupyterLabPageFixture } from '@jupyterlab/galata';
 import type { Locator } from '@playwright/test';
 
 const LOAD_COMMAND = 'plugin-playground:load-as-extension';
+const INTERNAL_CONTEXT_INFO_COMMAND = '__internal:context-menu-info';
 const CREATE_FILE_COMMAND = 'plugin-playground:create-new-plugin';
 const TEST_PLUGIN_ID = 'playground-integration-test:plugin';
 const TEST_TOGGLE_COMMAND = 'playground-integration-test:toggle';
@@ -318,6 +319,10 @@ test('commands tab lists and filters available commands', async ({ page }) => {
     LOAD_COMMAND
   ]);
   await expect(panel.getByText('Load Current File As Extension')).toBeVisible();
+
+  await filterInput.fill(INTERNAL_CONTEXT_INFO_COMMAND);
+  await expect(panel.locator('.jp-PluginPlayground-listItem')).toHaveCount(0);
+  await expect(panel.getByText('No matching commands.')).toBeVisible();
 });
 
 test('command completer suggests command ids inside execute calls', async ({

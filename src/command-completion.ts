@@ -24,6 +24,7 @@ export const COMMAND_COMPLETION_PROVIDER_ID =
 export const COMMAND_COMPLETION_PROVIDER_RANK = 1200;
 
 const SUPPORTED_MIME_PATTERN = /(typescript|javascript|jsx|tsx)/i;
+const INTERNAL_COMMAND_PREFIX = '__internal:';
 
 export class CommandCompletionProvider implements ICompletionProvider {
   constructor(app: JupyterFrontEnd) {
@@ -85,6 +86,7 @@ export function getCommandRecords(
 ): Array<ICommandRecord> {
   return app.commands
     .listCommands()
+    .filter(id => !Private.isHiddenCommand(id))
     .map(id => ({
       id,
       label: Private.safeCommandText(() => app.commands.label(id)),
@@ -162,6 +164,10 @@ namespace Private {
     } catch {
       return '';
     }
+  }
+
+  export function isHiddenCommand(id: string): boolean {
+    return id.startsWith(INTERNAL_COMMAND_PREFIX);
   }
 
   function quotedStringSuffix(afterCursor: string, quote: string): string {

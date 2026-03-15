@@ -227,8 +227,10 @@ class PluginPlayground {
       editorTracker.currentChanged.connect(() => {
         tokenSidebar.update();
       });
-      app.commands.commandChanged.connect(() => {
-        tokenSidebar.update();
+      app.commands.commandChanged.connect((_, args) => {
+        if (args.type === 'added' || args.type === 'removed') {
+          tokenSidebar.update();
+        }
       });
       // add to the launcher
       if (launcher && (settings.composite.showIconInLauncher as boolean)) {
@@ -805,23 +807,20 @@ const plugin: JupyterFrontEndPlugin<void> = {
   description:
     'Provide a playground for developing and testing JupyterLab plugins.',
   autoStart: true,
-  requires: [
-    ISettingRegistry,
-    ICommandPalette,
-    IEditorTracker,
-    ICompletionProviderManager
-  ],
-  optional: [ILauncher, IDocumentManager],
+  requires: [ISettingRegistry, ICommandPalette, IEditorTracker],
+  optional: [ICompletionProviderManager, ILauncher, IDocumentManager],
   activate: (
     app: JupyterFrontEnd,
     settingRegistry: ISettingRegistry,
     commandPalette: ICommandPalette,
     editorTracker: IEditorTracker,
-    completionManager: ICompletionProviderManager,
+    completionManager: ICompletionProviderManager | null,
     launcher: ILauncher | null,
     documentManager: IDocumentManager | null
   ) => {
-    completionManager.registerProvider(new CommandCompletionProvider(app));
+    if (completionManager) {
+      completionManager.registerProvider(new CommandCompletionProvider(app));
+    }
 
     // In order to accommodate loading ipywidgets and other AMD modules, we
     // load RequireJS before loading any custom extensions.
