@@ -102,7 +102,7 @@ export class ExampleSidebar extends ReactWidget {
                   <span className="jp-PluginPlayground-entryLabel jp-PluginPlayground-exampleName">
                     {example.name}
                   </span>
-                  <div className="jp-PluginPlayground-actions">
+                  <div className="jp-PluginPlayground-actions jp-PluginPlayground-exampleActions">
                     <button
                       className="jp-Button jp-mod-styled jp-mod-minimal jp-PluginPlayground-actionButton jp-PluginPlayground-exampleOpenButton"
                       type="button"
@@ -118,7 +118,9 @@ export class ExampleSidebar extends ReactWidget {
                         className:
                           'jp-PluginPlayground-actionIcon jp-PluginPlayground-exampleActionIcon'
                       })}
-                      Code
+                      <span className="jp-PluginPlayground-actionLabel">
+                        Code
+                      </span>
                     </button>
                     <button
                       className="jp-Button jp-mod-styled jp-mod-minimal jp-PluginPlayground-actionButton jp-PluginPlayground-exampleReadmeButton"
@@ -135,7 +137,9 @@ export class ExampleSidebar extends ReactWidget {
                         className:
                           'jp-PluginPlayground-actionIcon jp-PluginPlayground-exampleActionIcon'
                       })}
-                      README
+                      <span className="jp-PluginPlayground-actionLabel">
+                        README
+                      </span>
                     </button>
                   </div>
                 </div>
